@@ -272,7 +272,11 @@ sudo cp /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 # Install Flannel CNI (pod network)
-kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+# IMPORTANT: must specify --iface-regex so Flannel uses the Host-Only adapter,
+# not the NAT adapter. Host uses 'vboxnet0', VMs use 'enp0s8'.
+curl -o /tmp/flannel.yaml https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+sed -i '/- --kube-subnet-mgr/a\        - --iface-regex=vboxnet0|enp0s8' /tmp/flannel.yaml
+kubectl apply -f /tmp/flannel.yaml
 ```
 
 #### 3.5 — Join Worker Nodes (on each VM)
@@ -477,3 +481,82 @@ Uncomment the TLS section in `k8s/ingress.yaml` and configure [cert-manager](htt
          │(files)  │     │ (data)   │
          └─────────┘     └──────────┘
 ```
+
+## Troubleshooting (kubeadm + VirtualBox)
+
+<details>
+<summary><b>PVCs stuck in Pending — no StorageClass</b></summary>
+
+**Symptom**: `kubectl -n odoo get pvc` shows `Pending` status for all PVCs.
+
+**Cause**: kubeadm clusters don't include a storage provisioner by default.
+
+**Fix**:
+```bash
+# Install local-path-provisioner
+kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.26/deploy/local-path-storage.yaml
+
+# Set as default
+kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+
+# Verify
+kubectl get storageclass
+```
+
+</details>
+
+<details>
+<summary><b>i/o timeout — kubelet using NAT IP (10.0.2.15)</b></summary>
+
+**Symptom**: `kubectl logs` or `kubectl exec` returns:
+```
+Error from server: dial tcp 10.0.2.15:10250: i/o timeout
+```
+
+**Cause**: VirtualBox VMs have two NICs — kubelet registered with the NAT IP (`10.0.2.15`) which is unreachable from the host.
+
+**Fix** (on each worker VM):
+```bash
+# VM 1
+echo 'KUBELET_EXTRA_ARGS="--node-ip=192.168.56.101"' | sudo tee /etc/default/kubelet
+sudo systemctl restart kubelet
+
+# VM 2
+echo 'KUBELET_EXTRA_ARGS="--node-ip=192.168.56.102"' | sudo tee /etc/default/kubelet
+sudo systemctl restart kubelet
+```
+
+**Verify**: `kubectl get nodes -o wide` should show `192.168.56.x` IPs, not `10.0.2.15`.
+
+</details>
+
+<details>
+<summary><b>DNS not resolving — Flannel using wrong interface</b></summary>
+
+**Symptom**: Init container logs show:
+```
+nc: bad address 'postgres'
+```
+Or `nslookup` inside a pod returns `connection timed out; no servers could be reached`.
+
+**Cause**: Flannel picked the NAT interface instead of the Host-Only adapter, so pods on different nodes can't communicate.
+
+**Fix**:
+```bash
+# Download Flannel manifest
+curl -o /tmp/flannel.yaml https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+
+# Add --iface-regex to match both host (vboxnet0) and VMs (enp0s8)
+sed -i '/- --kube-subnet-mgr/a\        - --iface-regex=vboxnet0|enp0s8' /tmp/flannel.yaml
+
+# Reapply
+kubectl delete -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+kubectl apply -f /tmp/flannel.yaml
+
+# Verify all Flannel pods are Running
+kubectl -n kube-flannel get pods
+```
+
+> **Note**: The host interface is `vboxnet0`, VMs use `enp0s8`. Adjust names if your setup differs (`ip addr` to check).
+
+</details>

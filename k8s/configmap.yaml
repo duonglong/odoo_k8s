@@ -17,7 +17,7 @@ data:
     list_db = True
 
     ; Performance
-    workers = 2
+    workers = 0
     max_cron_threads = 1
     limit_memory_hard = 2684354560
     limit_memory_soft = 2147483648
