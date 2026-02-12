@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: odoo
+  namespace: odoo
+  labels:
+    app.kubernetes.io/name: odoo
+    app.kubernetes.io/component: web
+    app.kubernetes.io/part-of: odoo-stack
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: odoo
+  ports:
+    - name: http
+      port: 8069
+      targetPort: 8069
+      protocol: TCP
+    - name: longpolling
+      port: 8072
+      targetPort: 8072
+      protocol: TCP

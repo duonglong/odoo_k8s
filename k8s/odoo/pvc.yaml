@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: odoo-data
+  namespace: odoo
+  labels:
+    app.kubernetes.io/name: odoo
+    app.kubernetes.io/component: storage
+    app.kubernetes.io/part-of: odoo-stack
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
