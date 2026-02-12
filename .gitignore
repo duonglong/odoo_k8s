@@ -1,0 +1,23 @@
+# Odoo K8s - Git Ignore
+*.pyc
+__pycache__/
+*.pyo
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Docker
+docker/tmp/
+
+# K8s secrets (never commit real secrets)
+# k8s/secrets.yaml  # Uncomment if using real creds
+
+# Odoo
+*.log
+filestore/
+sessions/
