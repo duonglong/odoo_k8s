@@ -8,7 +8,6 @@ metadata:
     app.kubernetes.io/component: web
     app.kubernetes.io/part-of: odoo-stack
 spec:
-  replicas: 1
   strategy:
     type: RollingUpdate
     rollingUpdate:

@@ -16,7 +16,8 @@ data:
     admin_passwd = False
     list_db = True
 
-    ; Performance
+    ; Performance — workers=0 (gevent mode) for HPA multi-replica scaling
+    ; Set workers > 0 only if running a single replica
     workers = 0
     max_cron_threads = 1
     limit_memory_hard = 2684354560
@@ -40,3 +41,7 @@ data:
     db_port = 5432
     db_name = False
     db_maxconn = 64
+
+    ; Storage — store attachments in DB for multi-pod sharing (no shared filesystem needed)
+    ; For production, use S3: ir_attachment.location = s3 (requires odoo-s3 module)
+    ir_attachment.location = db

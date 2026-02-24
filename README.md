@@ -459,6 +459,50 @@ Place custom addon modules in the `addons/` directory. They are mounted at `/mnt
 
 Uncomment the TLS section in `k8s/ingress.yaml` and configure [cert-manager](https://cert-manager.io/) for automatic Let's Encrypt certificates.
 
+### Autoscaling (HPA)
+
+Odoo automatically scales from **1 to 5 pods** based on CPU and memory usage using a Kubernetes [Horizontal Pod Autoscaler](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/).
+
+| Metric | Scale-up threshold | Scale-down threshold |
+|--------|-------------------|---------------------|
+| CPU | > 70% average | < 70% (with 5min cooldown) |
+| Memory | > 80% average | < 80% (with 5min cooldown) |
+
+**Prerequisites** — Install Metrics Server (HPA reads metrics from it):
+
+```bash
+# For kubeadm / kind
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+# For kubeadm with self-signed certs, you may need:
+kubectl patch deployment metrics-server -n kube-system \
+  --type='json' \
+  -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--kubelet-insecure-tls"}]'
+
+# For minikube
+minikube addons enable metrics-server
+```
+
+**Apply HPA**:
+```bash
+kubectl apply -f k8s/odoo/hpa.yaml
+```
+
+**Monitor scaling**:
+```bash
+# Watch HPA status
+kubectl -n odoo get hpa -w
+
+# Current resource usage
+kubectl -n odoo top pods
+```
+
+**Scaling behavior**:
+- **Scale up**: Adds up to 2 pods per minute when thresholds exceeded
+- **Scale down**: Removes 1 pod every 2 minutes, with 5-minute stabilization to prevent flapping
+
+> ⚠️ **Note**: `workers = 0` (gevent mode) is required in `configmap.yaml` for multi-replica scaling. Multi-process mode (`workers > 0`) should only be used with a single replica.
+
 ## Architecture
 
 ```
