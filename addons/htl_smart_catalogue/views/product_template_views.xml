@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Product Template Catalogue Views -->
+    <record id="view_product_template_catalogue_tree" model="ir.ui.view">
+        <field name="name">product.template.catalogue.tree</field>
+        <field name="model">product.template</field>
+        <field name="arch" type="xml">
+            <list decoration-muted="not active">
+                <field name="series_code"/>
+                <field name="style_name"/>
+                <field name="name"/>
+                <field name="product_variant_count" string="Configs"/>
+                <field name="write_date" string="Last Updated"/>
+                <field name="active" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Product Details Page - Form View -->
+    <record id="view_product_template_catalogue_form" model="ir.ui.view">
+        <field name="name">product.template.catalogue.form</field>
+        <field name="model">product.template</field>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <!-- Export PDF - To be implemented
+                    <button name="action_export_pdf" 
+                            string="Export PDF" 
+                            type="object" 
+                            class="oe_highlight"
+                            invisible="not is_catalogue_product"/>
+                    -->
+                </header>
+                <sheet>
+                    <!-- Series Header -->
+                    <div class="oe_title">
+                        <h1>
+                            <field name="series_code" placeholder="Series Code" class="oe_inline" required="is_catalogue_product"/>
+                            <span class="oe_inline"> - </span>
+                            <field name="style_name" placeholder="Style" class="oe_inline" required="is_catalogue_product"/>
+                        </h1>
+                        <h2>
+                            <field name="name" placeholder="Product Name" required="1"/>
+                        </h2>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="is_catalogue_product"/>
+                        </group>
+                    </group>
+                    
+                    <!-- PART 1: Product Specifications -->
+                    <notebook>
+                        <page string="Product Specifications" invisible="not is_catalogue_product">
+                            <field name="product_variant_ids" context="{'default_is_catalogue_product': True}">
+                                <list editable="bottom">
+                                    <field name="default_code" string="Configuration" required="1"/>
+                                    <field name="width_cm" string="Width (cm)"/>
+                                    <field name="seat_width_cm" string="Seat Width (cm)"/>
+                                    <field name="depth_cm" string="Depth (cm)"/>
+                                    <field name="seat_depth_cm" string="Seat Depth (cm)"/>
+                                    <field name="back_height_cm" string="Back Height (cm)"/>
+                                    <field name="seat_height_cm" string="Seat Height (cm)"/>
+                                    <field name="weight_kg" string="Weight (kg)"/>
+                                    <field name="volume_m3" string="Volume (m³)"/>
+                                    <button name="action_view_images" 
+                                            string="Images" 
+                                            type="object" 
+                                            icon="fa-image"
+                                            class="btn-link"/>
+                                </list>
+                            </field>
+                        </page>
+                        
+                        <!-- PART 2: Other Information -->
+                        <page string="Other Information" invisible="not is_catalogue_product">
+                            <!-- Construction Section -->
+                            <group string="Construction Information">
+                                <field name="construction_info" 
+                                       widget="html" 
+                                       placeholder="Enter construction details, materials, etc."
+                                       nolabel="1"
+                                       options="{'style-inline': true}"/>
+                            </group>
+                            
+                            <separator string="Combination Layouts"/>
+                            
+                            <!-- Combination Images Section -->
+                            <group>
+                                <button name="action_add_combination" 
+                                        string="Add Combination Image" 
+                                        type="object" 
+                                        class="btn-primary"
+                                        icon="fa-plus"/>
+                            </group>
+                            
+                            <field name="combination_image_ids" nolabel="1">
+                                <kanban>
+                                    <field name="id"/>
+                                    <field name="image"/>
+                                    <field name="name"/>
+                                    <templates>
+                                        <t t-name="kanban-box">
+                                            <div class="oe_kanban_global_click" style="max-width: 300px; margin: 10px;">
+                                                <div class="o_kanban_image">
+                                                    <img t-att-src="kanban_image('product.catalogue.combination', 'image', record.id.raw_value)" 
+                                                         style="max-width: 100%; max-height: 250px; border: 1px solid #ddd;"/>
+                                                </div>
+                                                <div class="oe_kanban_details mt-2">
+                                                    <strong><field name="name"/></strong>
+                                                    <div class="mt-2">
+                                                        <button name="unlink" 
+                                                                type="object" 
+                                                                class="btn btn-sm btn-danger">
+                                                            <i class="fa fa-trash"/> Delete
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action for Catalogue Products -->
+    <record id="action_product_catalogue" model="ir.actions.act_window">
+        <field name="name">Product Catalogue</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('is_catalogue_product', '=', True)]</field>
+        <field name="context">{'default_is_catalogue_product': True}</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_product_template_catalogue_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_product_template_catalogue_form')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first catalogue product
+            </p>
+            <p>
+                Click the create button to add a new series with configurations.
+            </p>
+        </field>
+    </record>
+</odoo>

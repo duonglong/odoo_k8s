@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Option Type Tree View -->
+    <record id="view_sofa_option_type_tree" model="ir.ui.view">
+        <field name="name">sofa.option.type.tree</field>
+        <field name="model">sofa.option.type</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Option Tree View -->
+    <record id="view_sofa_option_tree" model="ir.ui.view">
+        <field name="name">sofa.option.tree</field>
+        <field name="model">sofa.option</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="option_type_id"/>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="product_id"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Option Form View -->
+    <record id="view_sofa_option_form" model="ir.ui.view">
+        <field name="name">sofa.option.form</field>
+        <field name="model">sofa.option</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="option_type_id"/>
+                            <field name="code"/>
+                            <field name="name"/>
+                        </group>
+                        <group>
+                            <field name="product_id"/>
+                            <field name="sequence"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_sofa_option_type" model="ir.actions.act_window">
+        <field name="name">Option Types</field>
+        <field name="res_model">sofa.option.type</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_sofa_option" model="ir.actions.act_window">
+        <field name="name">Options</field>
+        <field name="res_model">sofa.option</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

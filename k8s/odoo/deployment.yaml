@@ -12,7 +12,7 @@ spec:
     type: RollingUpdate
     rollingUpdate:
       maxSurge: 1
-      maxUnavailable: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: odoo
@@ -39,7 +39,8 @@ spec:
               echo "PostgreSQL is ready!"
       containers:
         - name: odoo
-          image: odoo:19.0
+          image: docker.io/gnold/odoo-k8s:19.0
+          imagePullPolicy: Always
           ports:
             - containerPort: 8069
               name: http
@@ -90,18 +91,9 @@ spec:
               mountPath: /etc/odoo/odoo.conf
               subPath: odoo.conf
               readOnly: true
-            - name: extra-addons
-              mountPath: /mnt/extra-addons
-              readOnly: true
       volumes:
         - name: odoo-data
-          persistentVolumeClaim:
-            claimName: odoo-data
+          emptyDir: {}  # Stateless — files stored in S3/DB, not local disk
         - name: odoo-config
           configMap:
             name: odoo-config
-        - name: extra-addons
-          emptyDir: {}
-          # To mount custom addons from a PVC, replace emptyDir with:
-          # persistentVolumeClaim:
-          #   claimName: odoo-addons

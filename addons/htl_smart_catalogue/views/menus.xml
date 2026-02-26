@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Main Menu -->
+    <menuitem id="menu_smart_catalogue_root"
+              name="Smart Catalogue"
+              sequence="10"
+              web_icon="htl_smart_catalogue,static/description/icon.png"/>
+    
+    <!-- Products Menu -->
+    <menuitem id="menu_catalogue_products"
+              name="Products"
+              parent="menu_smart_catalogue_root"
+              action="action_product_catalogue"
+              sequence="10"/>
+</odoo>

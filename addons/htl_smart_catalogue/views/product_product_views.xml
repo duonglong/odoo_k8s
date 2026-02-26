@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Configuration Detail Form -->
+    <record id="view_product_product_catalogue_form" model="ir.ui.view">
+        <field name="name">product.product.catalogue.form</field>
+        <field name="model">product.product</field>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="default_code" placeholder="Configuration Code" required="1"/>
+                        </h1>
+                        <h2>
+                            <field name="product_tmpl_id" readonly="1"/>
+                        </h2>
+                    </div>
+                    
+                    <group>
+                        <group string="Dimensions">
+                            <label for="width_cm" string="Width"/>
+                            <div class="o_row">
+                                <field name="width_cm" class="oe_inline" style="width: 80px;"/>
+                                <span class="oe_inline"> cm / </span>
+                                <field name="width_inch" readonly="1" class="oe_inline" style="width: 80px;"/>
+                                <span class="oe_inline"> inch</span>
+                            </div>
+                            
+                            <label for="seat_width_cm" string="Seat Width"/>
+                            <div class="o_row">
+                                <field name="seat_width_cm" class="oe_inline" style="width: 80px;"/>
+                                <span class="oe_inline"> cm / </span>
+                                <field name="seat_width_inch" readonly="1" class="oe_inline" style="width: 80px;"/>
+                                <span class="oe_inline"> inch</span>
+                            </div>
+                            
+                            <label for="depth_cm" string="Depth"/>
+                            <div class="o_row">
+                                <field name="depth_cm" placeholder="e.g., 50-91" class="oe_inline" style="width: 80px;"/>
+                                <span class="oe_inline"> cm / </span>
+                                <field name="depth_inch" readonly="1" class="oe_inline" style="width: 80px;"/>
+                                <span class="oe_inline"> inch</span>
+                            </div>
+                            
+                            <label for="seat_depth_cm" string="Seat Depth"/>
+                            <div class="o_row">
+                                <field name="seat_depth_cm" class="oe_inline" style="width: 80px;"/>
+                                <span class="oe_inline"> cm / </span>
+                                <field name="seat_depth_inch" readonly="1" class="oe_inline" style="width: 80px;"/>
+                                <span class="oe_inline"> inch</span>
+                            </div>
+                        </group>
+                        
+                        <group>
+                            <label for="back_height_cm" string="Back Height"/>
+                            <div class="o_row">
+                                <field name="back_height_cm" placeholder="e.g., 80-95" class="oe_inline" style="width: 80px;"/>
+                                <span class="oe_inline"> cm / </span>
+                                <field name="back_height_inch" readonly="1" class="oe_inline" style="width: 80px;"/>
+                                <span class="oe_inline"> inch</span>
+                            </div>
+                            
+                            <label for="seat_height_cm" string="Seat Height"/>
+                            <div class="o_row">
+                                <field name="seat_height_cm" class="oe_inline" style="width: 80px;"/>
+                                <span class="oe_inline"> cm / </span>
+                                <field name="seat_height_inch" readonly="1" class="oe_inline" style="width: 80px;"/>
+                                <span class="oe_inline"> inch</span>
+                            </div>
+                            
+                            <label for="weight_kg" string="Weight"/>
+                            <div class="o_row">
+                                <field name="weight_kg" class="oe_inline" style="width: 80px;"/>
+                                <span class="oe_inline"> kg / </span>
+                                <field name="weight_lb" readonly="1" class="oe_inline" style="width: 80px;"/>
+                                <span class="oe_inline"> lb</span>
+                            </div>
+                            
+                            <label for="volume_m3" string="Volume"/>
+                            <div class="o_row">
+                                <field name="volume_m3" class="oe_inline" style="width: 80px;"/>
+                                <span class="oe_inline"> m³ / </span>
+                                <field name="volume_ft3" readonly="1" class="oe_inline" style="width: 80px;"/>
+                                <span class="oe_inline"> ft³</span>
+                            </div>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

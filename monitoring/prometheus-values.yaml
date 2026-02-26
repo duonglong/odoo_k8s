@@ -1,0 +1,127 @@
+# kube-prometheus-stack Helm values
+# Install: helm install monitoring prometheus-community/kube-prometheus-stack \
+#            -n monitoring --create-namespace -f monitoring/prometheus-values.yaml
+
+grafana:
+  adminPassword: "admin"  # ⚠️ Change in production!
+
+  # Pre-configured data sources
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      url: http://loki.monitoring:3100
+      access: proxy
+      isDefault: false
+
+  # Dashboard providers
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: 'odoo'
+          folder: 'Odoo'
+          type: file
+          options:
+            path: /var/lib/grafana/dashboards/odoo
+
+  # Custom Odoo dashboard
+  dashboards:
+    odoo:
+      odoo-overview:
+        json: |
+          {
+            "title": "Odoo Overview",
+            "uid": "odoo-overview",
+            "panels": [
+              {
+                "title": "Odoo Pods Running",
+                "type": "stat",
+                "targets": [{"expr": "kube_deployment_status_replicas_available{namespace='odoo', deployment='odoo'}"}],
+                "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0}
+              },
+              {
+                "title": "Odoo CPU Usage",
+                "type": "timeseries",
+                "targets": [{"expr": "rate(container_cpu_usage_seconds_total{namespace='odoo', container='odoo'}[5m]) * 100"}],
+                "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4}
+              },
+              {
+                "title": "Odoo Memory Usage (MB)",
+                "type": "timeseries",
+                "targets": [{"expr": "container_memory_usage_bytes{namespace='odoo', container='odoo'} / 1024 / 1024"}],
+                "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4}
+              },
+              {
+                "title": "PostgreSQL CPU",
+                "type": "timeseries",
+                "targets": [{"expr": "rate(container_cpu_usage_seconds_total{namespace='odoo', container='postgres'}[5m]) * 100"}],
+                "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12}
+              },
+              {
+                "title": "PostgreSQL Memory (MB)",
+                "type": "timeseries",
+                "targets": [{"expr": "container_memory_usage_bytes{namespace='odoo', container='postgres'} / 1024 / 1024"}],
+                "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12}
+              },
+              {
+                "title": "HPA Replicas",
+                "type": "timeseries",
+                "targets": [
+                  {"expr": "kube_horizontalpodautoscaler_status_current_replicas{namespace='odoo'}", "legendFormat": "current"},
+                  {"expr": "kube_horizontalpodautoscaler_status_desired_replicas{namespace='odoo'}", "legendFormat": "desired"}
+                ],
+                "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20}
+              },
+              {
+                "title": "Pod Restart Count",
+                "type": "stat",
+                "targets": [{"expr": "kube_pod_container_status_restarts_total{namespace='odoo'}"}],
+                "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0}
+              },
+              {
+                "title": "Ingress Request Rate",
+                "type": "timeseries",
+                "targets": [{"expr": "rate(nginx_ingress_controller_requests{namespace='odoo'}[5m])"}],
+                "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20}
+              }
+            ],
+            "schemaVersion": 39,
+            "timezone": "browser",
+            "refresh": "10s"
+          }
+
+# Prometheus settings
+prometheus:
+  prometheusSpec:
+    retention: 15d
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "250m"
+      limits:
+        memory: "2Gi"
+        cpu: "1000m"
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 20Gi
+
+# Node exporter for host metrics
+nodeExporter:
+  enabled: true
+
+# kube-state-metrics for K8s object metrics
+kubeStateMetrics:
+  enabled: true
+
+# Alert manager
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"

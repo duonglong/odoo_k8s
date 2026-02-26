@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_sofa_quote_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <!-- Header -->
+                        <div class="row">
+                            <div class="col-6">
+                                <h2>Sofa Price Quote</h2>
+                                <p>
+                                    <strong>Quote Number:</strong> <span t-field="doc.name"/><br/>
+                                    <strong>Date:</strong> <span t-field="doc.create_date" t-options='{"widget": "date"}'/><br/>
+                                    <strong>Customer:</strong> <span t-field="doc.partner_id.name"/>
+                                </p>
+                            </div>
+                            <div class="col-6 text-right">
+                                <p>
+                                    <strong>Series:</strong> <span t-field="doc.series_id.full_name"/><br/>
+                                    <strong>Style:</strong> <span t-field="doc.style_id.name"/><br/>
+                                    <strong>Seats:</strong> <span t-field="doc.seat_number"/>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Configuration Summary -->
+                        <h3>Configuration</h3>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Component</th>
+                                    <th>Front Article</th>
+                                    <th>Back Article</th>
+                                    <th>Leg</th>
+                                    <th>Foam</th>
+                                    <th>Cost</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="doc.component_ids" t-as="component">
+                                    <td><span t-field="component.component_name"/></td>
+                                    <td><span t-field="component.article_front_id.name"/></td>
+                                    <td><span t-field="component.article_back_id.name"/></td>
+                                    <td><span t-field="component.leg_option_id.name"/></td>
+                                    <td><span t-field="component.foam_option_id.name"/></td>
+                                    <td class="text-right">
+                                        <span t-field="component.total_cost" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Pricing -->
+                        <h3>Pricing</h3>
+                        <div class="row">
+                            <div class="col-6">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Material Cost:</strong></td>
+                                        <td class="text-right">
+                                            <span t-field="doc.material_cost_full" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Freight Cost:</strong></td>
+                                        <td class="text-right">
+                                            <span t-field="doc.freight_cost_full" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>FOB Net:</strong></td>
+                                        <td class="text-right">
+                                            <span t-field="doc.fob_net" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-6">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Designer Margin:</strong></td>
+                                        <td class="text-right"><span t-field="doc.designer_margin"/>%</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Tariff:</strong></td>
+                                        <td class="text-right"><span t-field="doc.tariff_percent"/>%</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Commission:</strong></td>
+                                        <td class="text-right"><span t-field="doc.commission_percent"/>%</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Selling Price -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h3>Selling Price (Base)</h3>
+                                <h2 class="text-right">
+                                    <span t-field="doc.selling_price_full" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                </h2>
+                            </div>
+                        </div>
+
+                        <!-- Price Ratios -->
+                        <h3 class="mt-4">Price by Article Grade</h3>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Article Type</th>
+                                    <th>Category</th>
+                                    <th>Ratio</th>
+                                    <th class="text-right">Selling Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="doc.ratio_ids" t-as="ratio">
+                                    <td><span t-field="ratio.article_group"/></td>
+                                    <td><span t-field="ratio.category_name"/></td>
+                                    <td><span t-field="ratio.ratio"/></td>
+                                    <td class="text-right">
+                                        <span t-field="ratio.selling_price" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Footer -->
+                        <div class="row mt-5">
+                            <div class="col-12">
+                                <p class="text-muted">
+                                    <small>
+                                        This quote is valid for 30 days from the date of issue.<br/>
+                                        Terms and conditions apply.
+                                    </small>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

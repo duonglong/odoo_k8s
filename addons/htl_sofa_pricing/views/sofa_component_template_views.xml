@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Component Template Tree View -->
+    <record id="view_sofa_component_template_tree" model="ir.ui.view">
+        <field name="name">sofa.component.template.tree</field>
+        <field name="model">sofa.component.template</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="component_type_id"/>
+                <field name="series_id"/>
+                <field name="sap_bom_code"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Component Template Form View -->
+    <record id="view_sofa_component_template_form" model="ir.ui.view">
+        <field name="name">sofa.component.template.form</field>
+        <field name="model">sofa.component.template</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <field name="image" widget="image" class="oe_avatar"/>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Component Name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="component_type_id"/>
+                            <field name="series_id"/>
+                        </group>
+                        <group>
+                            <field name="style_id"/>
+                            <field name="sap_bom_code"/>
+                            <field name="sequence"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="BOM Lines">
+                            <field name="bom_line_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="product_id"/>
+                                    <field name="quantity"/>
+                                    <field name="uom_id"/>
+                                    <field name="article_usage"/>
+                                    <field name="notes"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Default Options">
+                            <field name="default_option_ids" widget="many2many_tags"/>
+                        </page>
+                        <page string="Option Types">
+                            <field name="option_type_ids" widget="many2many_tags"/>
+                        </page>
+                        <page string="Description">
+                            <field name="description"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Component Type Tree View -->
+    <record id="view_sofa_component_type_tree" model="ir.ui.view">
+        <field name="name">sofa.component.type.tree</field>
+        <field name="model">sofa.component.type</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_sofa_component_template" model="ir.actions.act_window">
+        <field name="name">Component Templates</field>
+        <field name="res_model">sofa.component.template</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_sofa_component_type" model="ir.actions.act_window">
+        <field name="name">Component Types</field>
+        <field name="res_model">sofa.component.type</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

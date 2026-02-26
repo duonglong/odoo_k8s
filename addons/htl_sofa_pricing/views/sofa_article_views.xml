@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Article Category Tree View -->
+    <record id="view_sofa_article_category_tree" model="ir.ui.view">
+        <field name="name">sofa.article.category.tree</field>
+        <field name="model">sofa.article.category</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="article_type"/>
+                <field name="ratio"/>
+                <field name="is_base" widget="boolean_toggle"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Article Tree View -->
+    <record id="view_sofa_article_tree" model="ir.ui.view">
+        <field name="name">sofa.article.tree</field>
+        <field name="model">sofa.article</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="category_id"/>
+                <field name="article_type"/>
+                <field name="product_id"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Article Form View -->
+    <record id="view_sofa_article_form" model="ir.ui.view">
+        <field name="name">sofa.article.form</field>
+        <field name="model">sofa.article</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="name"/>
+                            <field name="category_id"/>
+                        </group>
+                        <group>
+                            <field name="article_type"/>
+                            <field name="product_id"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_sofa_article_category" model="ir.actions.act_window">
+        <field name="name">Article Categories</field>
+        <field name="res_model">sofa.article.category</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_sofa_article" model="ir.actions.act_window">
+        <field name="name">Articles</field>
+        <field name="res_model">sofa.article</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

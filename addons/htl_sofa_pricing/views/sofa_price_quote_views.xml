@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Quote Tree View -->
+    <record id="view_sofa_price_quote_tree" model="ir.ui.view">
+        <field name="name">sofa.price.quote.tree</field>
+        <field name="model">sofa.price.quote</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="series_id"/>
+                <field name="style_id"/>
+                <field name="seat_number"/>
+                <field name="selling_price_full" widget="monetary"/>
+                <field name="create_date"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Quote Form View -->
+    <record id="view_sofa_price_quote_form" model="ir.ui.view">
+        <field name="name">sofa.price.quote.form</field>
+        <field name="model">sofa.price.quote</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_recalculate_price" 
+                            string="Recalculate Price" 
+                            type="object"
+                            class="btn-secondary"
+                            help="Recalculate selling price and regenerate price ratios"/>
+                    <button name="action_calculate_margin" 
+                            string="Calculate Margin" 
+                            type="object"
+                            class="btn-secondary"
+                            help="Calculate required margin from target selling price"/>
+                    <button name="%(action_sofa_export_wizard)d" 
+                            string="Export to Excel" 
+                            type="action"
+                            class="oe_highlight"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="series_id"/>
+                            <field name="style_id"/>
+                            <field name="seat_number"/>
+                        </group>
+                        <group>
+                            <field name="source"/>
+                            <field name="plant_id"/>
+                            <field name="configuration_code"/>
+                            <field name="package_type"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    
+                    <!-- Costs & Pricing Section -->
+                    <group string="Costs &amp; Pricing">
+                        <group string="Costs">
+                            <field name="material_cost_full" widget="monetary"/>
+                            <field name="freight_cost_full" widget="monetary"/>
+                            <field name="total_cost_full" widget="monetary"/>
+                        </group>
+                        <group string="Pricing">
+                            <field name="fob_net" widget="monetary"/>
+                            <field name="selling_price_full" widget="monetary" class="oe_subtotal_footer_separator"/>
+                        </group>
+                    </group>
+                    
+                    <!-- Pricing Factors Section -->
+                    <group string="Pricing Factors">
+                        <group string="Margins &amp; Factors">
+                            <field name="designer_margin"/>
+                            <field name="tariff_percent"/>
+                            <field name="commission_percent"/>
+                            <field name="loads_percent"/>
+                        </group>
+                        <group string="Per-Seat Charges">
+                            <field name="freight_per_seat" widget="monetary"/>
+                            <field name="local_charges_per_seat" widget="monetary"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Components">
+                            <field name="component_ids">
+                                <list>
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="template_id"/>
+                                    <field name="component_name"/>
+                                    <field name="article_front_id"/>
+                                    <field name="article_back_id"/>
+                                    <field name="total_cost" widget="monetary"/>
+                                </list>
+                                <form>
+                                    <group>
+                                        <group>
+                                            <field name="template_id"/>
+                                            <field name="component_name"/>
+                                            <field name="component_type_id"/>
+                                        </group>
+                                        <group>
+                                            <field name="std_fr"/>
+                                            <field name="sequence"/>
+                                        </group>
+                                    </group>
+                                    <group string="Articles">
+                                        <group>
+                                            <field name="article_front_id"/>
+                                            <field name="article_back_id"/>
+                                        </group>
+                                        <group>
+                                            <field name="article_group"/>
+                                            <field name="article_category_id"/>
+                                        </group>
+                                    </group>
+                                    <group string="Options">
+                                        <field name="option_type_ids" invisible="1"/>
+                                        <field name="option_ids" widget="many2many_tags"
+                                               domain="[('option_type_id', 'in', option_type_ids)]"/>
+                                    </group>
+                                    <group string="Cost Summary">
+                                        <group>
+                                            <field name="material_cost" widget="monetary"/>
+                                            <field name="freight_cost" widget="monetary"/>
+                                        </group>
+                                        <group>
+                                            <field name="total_cost" widget="monetary"/>
+                                        </group>
+                                    </group>
+                                    <notebook>
+                                        <page string="Materials">
+                                            <field name="material_ids">
+                                                <list editable="bottom">
+                                                    <field name="sequence" widget="handle"/>
+                                                    <field name="product_id"/>
+                                                    <field name="quantity"/>
+                                                    <field name="uom_id"/>
+                                                    <field name="unit_price" widget="monetary"/>
+                                                    <field name="article_usage"/>
+                                                    <field name="material_cost" widget="monetary"/>
+                                                    <field name="price_changed" widget="boolean_toggle"/>
+                                                </list>
+                                            </field>
+                                        </page>
+                                    </notebook>
+                                </form>
+                            </field>
+                        </page>
+                        
+                        <page string="Price Ratios">
+                            <field name="ratio_ids">
+                                <list>
+                                    <field name="article_group"/>
+                                    <field name="category_name"/>
+                                    <field name="ratio"/>
+                                    <field name="selling_price" widget="monetary"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_sofa_price_quote" model="ir.actions.act_window">
+        <field name="name">Price Quotes</field>
+        <field name="res_model">sofa.price.quote</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_my_quotes': 1}</field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_sofa_price_quote_search" model="ir.ui.view">
+        <field name="name">sofa.price.quote.search</field>
+        <field name="model">sofa.price.quote</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="series_id"/>
+<!--                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>-->
+<!--                <filter string="Calculated" name="calculated" domain="[('state', '=', 'calculated')]"/>-->
+<!--                <group expand="0" string="Group By">-->
+<!--                    <filter string="Series" name="group_series" context="{'group_by': 'series_id'}"/>-->
+<!--                    <filter string="Customer" name="group_partner" context="{'group_by': 'partner_id'}"/>-->
+<!--                    <filter string="State" name="group_state" context="{'group_by': 'state'}"/>-->
+<!--                </group>-->
+            </search>
+        </field>
+    </record>
+</odoo>

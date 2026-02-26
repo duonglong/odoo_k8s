@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Main Menu -->
+    <menuitem id="menu_sofa_pricing_root"
+              name="Sofa Pricing"
+              sequence="10"
+              web_icon="htl_sofa_pricing,static/description/icon.png"/>
+
+    <!-- Quotes Menu -->
+    <menuitem id="menu_sofa_pricing_quotes"
+              name="Quotes"
+              parent="menu_sofa_pricing_root"
+              sequence="10"/>
+
+    <menuitem id="menu_sofa_price_quote"
+              name="Price Quotes"
+              parent="menu_sofa_pricing_quotes"
+              action="action_sofa_price_quote"
+              sequence="10"/>
+
+    <!-- Configuration Menu -->
+    <menuitem id="menu_sofa_pricing_configuration"
+              name="Configuration"
+              parent="menu_sofa_pricing_root"
+              sequence="20"/>
+
+    <menuitem id="menu_sofa_component_template"
+              name="Component Templates"
+              parent="menu_sofa_pricing_configuration"
+              action="action_sofa_component_template"
+              sequence="10"/>
+
+    <menuitem id="menu_sofa_component_type"
+              name="Component Types"
+              parent="menu_sofa_pricing_configuration"
+              action="action_sofa_component_type"
+              sequence="20"/>
+
+    <menuitem id="menu_sofa_option_type"
+              name="Option Types"
+              parent="menu_sofa_pricing_configuration"
+              action="action_sofa_option_type"
+              sequence="30"/>
+
+    <menuitem id="menu_sofa_option"
+              name="Options"
+              parent="menu_sofa_pricing_configuration"
+              action="action_sofa_option"
+              sequence="40"/>
+
+    <!-- Master Data Menu -->
+    <menuitem id="menu_sofa_pricing_master_data"
+              name="Master Data"
+              parent="menu_sofa_pricing_root"
+              sequence="30"/>
+
+    <menuitem id="menu_sofa_series"
+              name="Series"
+              parent="menu_sofa_pricing_master_data"
+              action="action_sofa_series"
+              sequence="10"/>
+
+    <menuitem id="menu_sofa_style"
+              name="Styles"
+              parent="menu_sofa_pricing_master_data"
+              action="action_sofa_style"
+              sequence="20"/>
+
+    <menuitem id="menu_sofa_article_category"
+              name="Article Categories"
+              parent="menu_sofa_pricing_master_data"
+              action="action_sofa_article_category"
+              sequence="30"/>
+
+    <menuitem id="menu_sofa_article"
+              name="Articles"
+              parent="menu_sofa_pricing_master_data"
+              action="action_sofa_article"
+              sequence="40"/>
+
+    <menuitem id="menu_sofa_margin"
+              name="Margins"
+              parent="menu_sofa_pricing_master_data"
+              action="action_sofa_margin"
+              sequence="50"/>
+</odoo>

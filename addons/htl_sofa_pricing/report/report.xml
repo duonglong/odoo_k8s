@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Report Definition -->
+    <record id="action_report_sofa_quote" model="ir.actions.report">
+        <field name="name">Sofa Price Quote</field>
+        <field name="model">sofa.price.quote</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">htl_sofa_pricing.report_sofa_quote_document</field>
+        <field name="report_file">htl_sofa_pricing.report_sofa_quote_document</field>
+        <field name="binding_model_id" ref="model_sofa_price_quote"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>

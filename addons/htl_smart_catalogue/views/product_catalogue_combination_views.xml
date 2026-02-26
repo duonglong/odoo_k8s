@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Combination Layout Form View -->
+    <record id="view_product_catalogue_combination_form" model="ir.ui.view">
+        <field name="name">product.catalogue.combination.form</field>
+        <field name="model">product.catalogue.combination</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="product_tmpl_id" invisible="1"/>
+                        <field name="name" placeholder="e.g., L-Shape Configuration, Sectional Layout" required="1"/>
+                        <field name="image" widget="image" class="oe_avatar" required="1"/>
+                        <field name="image_filename" invisible="1"/>
+                        <field name="sequence"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button string="Save" type="object" name="action_save_and_close" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,29 @@
+# Loki + Promtail for centralized log collection
+# Install: helm install loki grafana/loki-stack -n monitoring -f monitoring/loki-values.yaml
+
+loki:
+  persistence:
+    enabled: true
+    size: 10Gi
+  config:
+    limits_config:
+      retention_period: 168h  # 7 days
+    table_manager:
+      retention_deletes_enabled: true
+      retention_period: 168h
+
+promtail:
+  enabled: true
+  config:
+    snippets:
+      # Add namespace label for easy filtering
+      pipelineStages:
+        - docker: {}
+        - match:
+            selector: '{namespace="odoo"}'
+            stages:
+              - regex:
+                  expression: '(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}) (?P<pid>\d+) (?P<level>\w+) (?P<module>[\w.]+): (?P<message>.*)'
+              - labels:
+                  level:
+                  module:

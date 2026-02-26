@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Export Wizard Form View -->
+    <record id="view_sofa_export_wizard_form" model="ir.ui.view">
+        <field name="name">sofa.export.wizard.form</field>
+        <field name="model">sofa.export.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <group invisible="state != 'choose'">
+                    <field name="state" invisible="1"/>
+                    <field name="quote_id" readonly="1"/>
+                    <field name="template_type"/>
+                </group>
+                <group invisible="state != 'get'">
+                    <field name="state" invisible="1"/>
+                    <field name="file_name" invisible="1"/>
+                    <field name="file_data" filename="file_name"/>
+                </group>
+                <footer>
+                    <button string="Export" name="action_export" type="object" class="oe_highlight" invisible="state != 'choose'"/>
+                    <button string="Close" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Export Wizard Action -->
+    <record id="action_sofa_export_wizard" model="ir.actions.act_window">
+        <field name="name">Export Quote</field>
+        <field name="res_model">sofa.export.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============================================ -->
+    <!-- LINK OPTIONS TO PRODUCTS -->
+    <!-- ============================================ -->
+    
+    <!-- Link Leg Options to Products -->
+    <record id="demo_option_leg_wood_a" model="sofa.option">
+        <field name="product_id" ref="demo_product_wood_leg"/>
+    </record>
+    
+    <!-- Link Foam Options to Products -->
+    <record id="demo_option_foam_std" model="sofa.option">
+        <field name="product_id" ref="demo_product_foam_std"/>
+    </record>
+    
+    <record id="demo_option_foam_premium" model="sofa.option">
+        <field name="product_id" ref="demo_product_foam_premium"/>
+    </record>
+    
+</odoo>

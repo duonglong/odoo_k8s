@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============================================ -->
+    <!-- DEMO PRODUCTS (Raw Materials) -->
+    <!-- ============================================ -->
+    
+    <!-- Product Categories -->
+    <record id="demo_categ_fabric" model="product.category">
+        <field name="name">Sofa Fabrics</field>
+    </record>
+    
+    <record id="demo_categ_leather" model="product.category">
+        <field name="name">Sofa Leathers</field>
+    </record>
+    
+    <record id="demo_categ_foam" model="product.category">
+        <field name="name">Sofa Foam</field>
+    </record>
+    
+    <record id="demo_categ_wood" model="product.category">
+        <field name="name">Sofa Wood Components</field>
+    </record>
+    
+    <record id="demo_categ_hardware" model="product.category">
+        <field name="name">Sofa Hardware</field>
+    </record>
+    
+    <!-- Fabric Products -->
+    <record id="demo_product_fabric_cotton" model="product.product">
+        <field name="name">Cotton Blend Fabric</field>
+        <field name="default_code">FAB-COT-001</field>
+        <field name="categ_id" ref="demo_categ_fabric"/>
+        <field name="uom_id" ref="uom.product_uom_meter"/>
+        <field name="list_price">25.00</field>
+        <field name="standard_price">18.00</field>
+    </record>
+    
+    <record id="demo_product_fabric_linen" model="product.product">
+        <field name="name">Linen Fabric</field>
+        <field name="default_code">FAB-LIN-001</field>
+        <field name="categ_id" ref="demo_categ_fabric"/>
+        <field name="uom_id" ref="uom.product_uom_meter"/>
+        <field name="list_price">32.00</field>
+        <field name="standard_price">24.00</field>
+    </record>
+    
+    <record id="demo_product_fabric_velvet" model="product.product">
+        <field name="name">Velvet Fabric</field>
+        <field name="default_code">FAB-VEL-001</field>
+        <field name="categ_id" ref="demo_categ_fabric"/>
+        <field name="uom_id" ref="uom.product_uom_meter"/>
+        <field name="list_price">45.00</field>
+        <field name="standard_price">35.00</field>
+    </record>
+    
+    <!-- Leather Products -->
+    <record id="demo_product_leather_premium" model="product.product">
+        <field name="name">Premium Leather</field>
+        <field name="default_code">LTR-PREM-001</field>
+        <field name="categ_id" ref="demo_categ_leather"/>
+        <field name="uom_id" ref="uom.product_uom_meter"/>
+        <field name="list_price">85.00</field>
+        <field name="standard_price">65.00</field>
+    </record>
+    
+    <!-- Foam Products -->
+    <record id="demo_product_foam_std" model="product.product">
+        <field name="name">Standard Foam Block</field>
+        <field name="default_code">FOAM-STD-001</field>
+        <field name="categ_id" ref="demo_categ_foam"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+        <field name="list_price">15.00</field>
+        <field name="standard_price">10.00</field>
+    </record>
+    
+    <record id="demo_product_foam_premium" model="product.product">
+        <field name="name">Premium K Foam Block</field>
+        <field name="default_code">FOAM-K-001</field>
+        <field name="categ_id" ref="demo_categ_foam"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+        <field name="list_price">22.00</field>
+        <field name="standard_price">16.00</field>
+    </record>
+    
+    <!-- Wood Products -->
+    <record id="demo_product_wood_frame" model="product.product">
+        <field name="name">Hardwood Frame</field>
+        <field name="default_code">WOOD-FRM-001</field>
+        <field name="categ_id" ref="demo_categ_wood"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+        <field name="list_price">45.00</field>
+        <field name="standard_price">32.00</field>
+    </record>
+    
+    <record id="demo_product_wood_leg" model="product.product">
+        <field name="name">Wood Leg MLG-1482</field>
+        <field name="default_code">WOOD-LEG-1482</field>
+        <field name="categ_id" ref="demo_categ_wood"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+        <field name="list_price">8.50</field>
+        <field name="standard_price">5.50</field>
+    </record>
+    
+    <!-- Hardware Products -->
+    <record id="demo_product_hardware_screws" model="product.product">
+        <field name="name">Screws Set</field>
+        <field name="default_code">HW-SCR-001</field>
+        <field name="categ_id" ref="demo_categ_hardware"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+        <field name="list_price">2.50</field>
+        <field name="standard_price">1.20</field>
+    </record>
+    
+    <record id="demo_product_hardware_brackets" model="product.product">
+        <field name="name">Metal Brackets</field>
+        <field name="default_code">HW-BRK-001</field>
+        <field name="categ_id" ref="demo_categ_hardware"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+        <field name="list_price">3.75</field>
+        <field name="standard_price">2.10</field>
+    </record>
+    
+    <record id="demo_product_hardware_springs" model="product.product">
+        <field name="name">Coil Springs</field>
+        <field name="default_code">HW-SPR-001</field>
+        <field name="categ_id" ref="demo_categ_hardware"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+        <field name="list_price">6.00</field>
+        <field name="standard_price">3.80</field>
+    </record>
+    
+    <!-- ============================================ -->
+    <!-- LINK ARTICLES TO PRODUCTS -->
+    <!-- ============================================ -->
+    
+    <record id="demo_article_fab1" model="sofa.article">
+        <field name="product_id" ref="demo_product_fabric_cotton"/>
+    </record>
+    
+    <record id="demo_article_fab2" model="sofa.article">
+        <field name="product_id" ref="demo_product_fabric_linen"/>
+    </record>
+    
+    <record id="demo_article_fab3" model="sofa.article">
+        <field name="product_id" ref="demo_product_fabric_velvet"/>
+    </record>
+    
+    <record id="demo_article_ltr1" model="sofa.article">
+        <field name="product_id" ref="demo_product_leather_premium"/>
+    </record>
+    
+    <record id="demo_article_ltr2" model="sofa.article">
+        <field name="product_id" ref="demo_product_leather_premium"/>
+    </record>
+    
+    <!-- ============================================ -->
+    <!-- COMPONENT BOM LINES -->
+    <!-- ============================================ -->
+    
+    <!-- Arm Component BOM -->
+    <record id="demo_bom_arm_frame" model="sofa.component.bom.line">
+        <field name="template_id" ref="demo_template_arm1"/>
+        <field name="product_id" ref="demo_product_wood_frame"/>
+        <field name="quantity">1</field>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+        <field name="article_usage">accessory</field>
+        <field name="sequence">10</field>
+    </record>
+    
+    <record id="demo_bom_arm_foam" model="sofa.component.bom.line">
+        <field name="template_id" ref="demo_template_arm1"/>
+        <field name="product_id" ref="demo_product_foam_std"/>
+        <field name="quantity">2</field>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+        <field name="article_usage">accessory</field>
+        <field name="sequence">20</field>
+    </record>
+    
+    <record id="demo_bom_arm_screws" model="sofa.component.bom.line">
+        <field name="template_id" ref="demo_template_arm1"/>
+        <field name="product_id" ref="demo_product_hardware_screws"/>
+        <field name="quantity">1</field>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+        <field name="article_usage">accessory</field>
+        <field name="sequence">30</field>
+    </record>
+    
+    <!-- Seat Component BOM -->
+    <record id="demo_bom_seat_frame" model="sofa.component.bom.line">
+        <field name="template_id" ref="demo_template_seat1"/>
+        <field name="product_id" ref="demo_product_wood_frame"/>
+        <field name="quantity">1</field>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+        <field name="article_usage">accessory</field>
+        <field name="sequence">10</field>
+    </record>
+    
+    <record id="demo_bom_seat_foam" model="sofa.component.bom.line">
+        <field name="template_id" ref="demo_template_seat1"/>
+        <field name="product_id" ref="demo_product_foam_std"/>
+        <field name="quantity">3</field>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+        <field name="article_usage">accessory</field>
+        <field name="sequence">20</field>
+    </record>
+    
+    <record id="demo_bom_seat_springs" model="sofa.component.bom.line">
+        <field name="template_id" ref="demo_template_seat1"/>
+        <field name="product_id" ref="demo_product_hardware_springs"/>
+        <field name="quantity">8</field>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+        <field name="article_usage">accessory</field>
+        <field name="sequence">30</field>
+    </record>
+    
+    <record id="demo_bom_seat_brackets" model="sofa.component.bom.line">
+        <field name="template_id" ref="demo_template_seat1"/>
+        <field name="product_id" ref="demo_product_hardware_brackets"/>
+        <field name="quantity">4</field>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+        <field name="article_usage">accessory</field>
+        <field name="sequence">40</field>
+    </record>
+    
+    <!-- Back Component BOM -->
+    <record id="demo_bom_back_frame" model="sofa.component.bom.line">
+        <field name="template_id" ref="demo_template_back1"/>
+        <field name="product_id" ref="demo_product_wood_frame"/>
+        <field name="quantity">1</field>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+        <field name="article_usage">accessory</field>
+        <field name="sequence">10</field>
+    </record>
+    
+    <record id="demo_bom_back_foam" model="sofa.component.bom.line">
+        <field name="template_id" ref="demo_template_back1"/>
+        <field name="product_id" ref="demo_product_foam_std"/>
+        <field name="quantity">2</field>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+        <field name="article_usage">accessory</field>
+        <field name="sequence">20</field>
+    </record>
+    
+    <record id="demo_bom_back_screws" model="sofa.component.bom.line">
+        <field name="template_id" ref="demo_template_back1"/>
+        <field name="product_id" ref="demo_product_hardware_screws"/>
+        <field name="quantity">1</field>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+        <field name="article_usage">accessory</field>
+        <field name="sequence">30</field>
+    </record>
+    
+</odoo>

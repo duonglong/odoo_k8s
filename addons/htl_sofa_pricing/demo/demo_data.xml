@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============================================ -->
+    <!-- SERIES & STYLES -->
+    <!-- ============================================ -->
+    
+    <record id="demo_series_6114" model="sofa.series">
+        <field name="name">6114</field>
+        <field name="full_name">6114 UP &amp; DOWN</field>
+        <field name="description">Premium reclining sofa series with up and down functionality</field>
+    </record>
+    
+    <record id="demo_series_3368" model="sofa.series">
+        <field name="name">3368</field>
+        <field name="full_name">3368 CLASSIC</field>
+        <field name="description">Classic comfort sofa series</field>
+    </record>
+    
+    <record id="demo_style_modern" model="sofa.style">
+        <field name="series_id" ref="demo_series_6114"/>
+        <field name="name">Modern</field>
+    </record>
+    
+    <record id="demo_style_classic" model="sofa.style">
+        <field name="series_id" ref="demo_series_3368"/>
+        <field name="name">Classic</field>
+    </record>
+    
+    <!-- ============================================ -->
+    <!-- COMPONENT TYPES -->
+    <!-- ============================================ -->
+    
+    <record id="demo_component_type_arm" model="sofa.component.type">
+        <field name="name">Arm</field>
+        <field name="code">ARM</field>
+        <field name="sequence">10</field>
+    </record>
+    
+    <record id="demo_component_type_seat" model="sofa.component.type">
+        <field name="name">Seat</field>
+        <field name="code">SEAT</field>
+        <field name="sequence">20</field>
+    </record>
+    
+    <record id="demo_component_type_back" model="sofa.component.type">
+        <field name="name">Back</field>
+        <field name="code">BACK</field>
+        <field name="sequence">30</field>
+    </record>
+    
+    <!-- ============================================ -->
+    <!-- OPTION TYPES & OPTIONS -->
+    <!-- ============================================ -->
+    
+    <record id="demo_option_type_leg" model="sofa.option.type">
+        <field name="name">Leg Type</field>
+        <field name="code">LEG</field>
+        <field name="sequence">10</field>
+    </record>
+    
+    <record id="demo_option_type_foam" model="sofa.option.type">
+        <field name="name">Foam Type</field>
+        <field name="code">FOAM</field>
+        <field name="sequence">20</field>
+    </record>
+    
+    <record id="demo_option_type_voltage" model="sofa.option.type">
+        <field name="name">Voltage</field>
+        <field name="code">VOLT</field>
+        <field name="sequence">30</field>
+    </record>
+    
+    <!-- Leg Options -->
+    <record id="demo_option_leg_wood_a" model="sofa.option">
+        <field name="option_type_id" ref="demo_option_type_leg"/>
+        <field name="code">MLG-1482</field>
+        <field name="name">Wood Leg A</field>
+        <field name="sequence">10</field>
+    </record>
+    
+    <record id="demo_option_leg_metal_b" model="sofa.option">
+        <field name="option_type_id" ref="demo_option_type_leg"/>
+        <field name="code">MLG-1483</field>
+        <field name="name">Metal Leg B</field>
+        <field name="sequence">20</field>
+    </record>
+    
+    <!-- Foam Options -->
+    <record id="demo_option_foam_std" model="sofa.option">
+        <field name="option_type_id" ref="demo_option_type_foam"/>
+        <field name="code">STD</field>
+        <field name="name">Standard Foam</field>
+        <field name="sequence">10</field>
+    </record>
+    
+    <record id="demo_option_foam_premium" model="sofa.option">
+        <field name="option_type_id" ref="demo_option_type_foam"/>
+        <field name="code">K</field>
+        <field name="name">Premium K Foam</field>
+        <field name="sequence">20</field>
+    </record>
+    
+    <!-- Voltage Options -->
+    <record id="demo_option_voltage_110" model="sofa.option">
+        <field name="option_type_id" ref="demo_option_type_voltage"/>
+        <field name="code">110V</field>
+        <field name="name">110V</field>
+        <field name="sequence">10</field>
+    </record>
+    
+    <record id="demo_option_voltage_220" model="sofa.option">
+        <field name="option_type_id" ref="demo_option_type_voltage"/>
+        <field name="code">220V</field>
+        <field name="name">220V</field>
+        <field name="sequence">20</field>
+    </record>
+    
+    <!-- ============================================ -->
+    <!-- ARTICLE CATEGORIES -->
+    <!-- ============================================ -->
+    
+    <!-- Fabric Categories -->
+    <record id="demo_article_cat_gp1" model="sofa.article.category">
+        <field name="name">GP1</field>
+        <field name="code">GP1</field>
+        <field name="article_type">fabric</field>
+        <field name="ratio">1.0</field>
+        <field name="is_base" eval="True"/>
+    </record>
+    
+    <record id="demo_article_cat_gp2" model="sofa.article.category">
+        <field name="name">GP2</field>
+        <field name="code">GP2</field>
+        <field name="article_type">fabric</field>
+        <field name="ratio">1.04</field>
+    </record>
+    
+    <record id="demo_article_cat_gp3" model="sofa.article.category">
+        <field name="name">GP3</field>
+        <field name="code">GP3</field>
+        <field name="article_type">fabric</field>
+        <field name="ratio">1.08</field>
+    </record>
+    
+    <record id="demo_article_cat_gp4" model="sofa.article.category">
+        <field name="name">GP4</field>
+        <field name="code">GP4</field>
+        <field name="article_type">fabric</field>
+        <field name="ratio">1.12</field>
+    </record>
+    
+    <!-- Leather Categories -->
+    <record id="demo_article_cat_ltr1" model="sofa.article.category">
+        <field name="name">LTR1</field>
+        <field name="code">LTR1</field>
+        <field name="article_type">leather</field>
+        <field name="ratio">1.20</field>
+    </record>
+    
+    <record id="demo_article_cat_ltr2" model="sofa.article.category">
+        <field name="name">LTR2</field>
+        <field name="code">LTR2</field>
+        <field name="article_type">leather</field>
+        <field name="ratio">1.35</field>
+    </record>
+    
+    <record id="demo_article_cat_ltr3" model="sofa.article.category">
+        <field name="name">LTR3</field>
+        <field name="code">LTR3</field>
+        <field name="article_type">leather</field>
+        <field name="ratio">1.50</field>
+    </record>
+    
+    <!-- ============================================ -->
+    <!-- ARTICLES -->
+    <!-- ============================================ -->
+    
+    <!-- Fabric Articles -->
+    <record id="demo_article_fab1" model="sofa.article">
+        <field name="code">FAB1</field>
+        <field name="name">Cotton Blend Beige</field>
+        <field name="category_id" ref="demo_article_cat_gp1"/>
+        <field name="article_type">fabric</field>
+    </record>
+    
+    <record id="demo_article_fab2" model="sofa.article">
+        <field name="code">FAB2</field>
+        <field name="name">Linen Grey</field>
+        <field name="category_id" ref="demo_article_cat_gp2"/>
+        <field name="article_type">fabric</field>
+    </record>
+    
+    <record id="demo_article_fab3" model="sofa.article">
+        <field name="code">FAB3</field>
+        <field name="name">Velvet Navy</field>
+        <field name="category_id" ref="demo_article_cat_gp3"/>
+        <field name="article_type">fabric</field>
+    </record>
+    
+    <!-- Leather Articles -->
+    <record id="demo_article_ltr1" model="sofa.article">
+        <field name="code">LTR-BRN</field>
+        <field name="name">Premium Leather Brown</field>
+        <field name="category_id" ref="demo_article_cat_ltr1"/>
+        <field name="article_type">leather</field>
+    </record>
+    
+    <record id="demo_article_ltr2" model="sofa.article">
+        <field name="code">LTR-BLK</field>
+        <field name="name">Premium Leather Black</field>
+        <field name="category_id" ref="demo_article_cat_ltr2"/>
+        <field name="article_type">leather</field>
+    </record>
+    
+    <!-- ============================================ -->
+    <!-- MARGINS -->
+    <!-- ============================================ -->
+    
+    <record id="demo_margin_6114_fabric" model="sofa.margin">
+        <field name="series_id" ref="demo_series_6114"/>
+        <field name="article_group">fabric</field>
+        <field name="margin_percent">35.0</field>
+    </record>
+    
+    <record id="demo_margin_6114_leather" model="sofa.margin">
+        <field name="series_id" ref="demo_series_6114"/>
+        <field name="article_group">leather</field>
+        <field name="margin_percent">40.0</field>
+    </record>
+    
+    <record id="demo_margin_3368_fabric" model="sofa.margin">
+        <field name="series_id" ref="demo_series_3368"/>
+        <field name="article_group">fabric</field>
+        <field name="margin_percent">32.0</field>
+    </record>
+    
+    <record id="demo_margin_3368_leather" model="sofa.margin">
+        <field name="series_id" ref="demo_series_3368"/>
+        <field name="article_group">leather</field>
+        <field name="margin_percent">38.0</field>
+    </record>
+    
+    <!-- ============================================ -->
+    <!-- COMPONENT TEMPLATES -->
+    <!-- ============================================ -->
+    
+    <record id="demo_template_arm1" model="sofa.component.template">
+        <field name="code">SM6114-A001</field>
+        <field name="name">Arm 1 - Standard</field>
+        <field name="component_type_id" ref="demo_component_type_arm"/>
+        <field name="series_id" ref="demo_series_6114"/>
+        <field name="style_id" ref="demo_style_modern"/>
+        <field name="sap_bom_code">BOM-ARM-001</field>
+        <field name="sequence">10</field>
+        <!-- Arm needs: Leg + Foam -->
+        <field name="option_type_ids" eval="[(6, 0, [ref('demo_option_type_leg'), ref('demo_option_type_foam')])]"/>
+        <field name="default_option_ids" eval="[(6, 0, [ref('demo_option_leg_wood_a'), ref('demo_option_foam_std')])]"/>
+    </record>
+    
+    <record id="demo_template_seat1" model="sofa.component.template">
+        <field name="code">SM6114-S001</field>
+        <field name="name">Seat 1 - Standard</field>
+        <field name="component_type_id" ref="demo_component_type_seat"/>
+        <field name="series_id" ref="demo_series_6114"/>
+        <field name="style_id" ref="demo_style_modern"/>
+        <field name="sap_bom_code">BOM-SEAT-001</field>
+        <field name="sequence">20</field>
+        <!-- Seat needs: Foam + Voltage -->
+        <field name="option_type_ids" eval="[(6, 0, [ref('demo_option_type_foam'), ref('demo_option_type_voltage')])]"/>
+        <field name="default_option_ids" eval="[(6, 0, [ref('demo_option_foam_std'), ref('demo_option_voltage_110')])]"/>
+    </record>
+    
+    <record id="demo_template_back1" model="sofa.component.template">
+        <field name="code">SM6114-B001</field>
+        <field name="name">Back 1 - Standard</field>
+        <field name="component_type_id" ref="demo_component_type_back"/>
+        <field name="series_id" ref="demo_series_6114"/>
+        <field name="style_id" ref="demo_style_modern"/>
+        <field name="sap_bom_code">BOM-BACK-001</field>
+        <field name="sequence">30</field>
+        <!-- Back needs: Foam only -->
+        <field name="option_type_ids" eval="[(6, 0, [ref('demo_option_type_foam')])]"/>
+        <field name="default_option_ids" eval="[(6, 0, [ref('demo_option_foam_std')])]"/>
+    </record>
+
+    
+</odoo>

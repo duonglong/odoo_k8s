@@ -426,13 +426,69 @@ sudo kubeadm reset
 ```bash
 make help        # Show all available commands
 make build       # Build custom Docker image
+make push        # Push image to registry
 make up / down   # Docker Compose lifecycle
 make deploy      # Deploy to K8s
 make undeploy    # Remove from K8s
 make status      # Show K8s resource status
 make k8s-logs    # Tail Odoo pod logs
 make k8s-shell   # Shell into Odoo pod
+make psql        # Connect to PostgreSQL (psql)
+make odoo-shell  # Open Odoo interactive shell
 make port-forward # Port-forward Odoo locally
+```
+
+## Rolling Out Changes
+
+### New Addons (code only, no new Python deps)
+
+```bash
+# 1. Update addons/ directory with your module
+# 2. Restart pods to pick up new code
+kubectl -n odoo rollout restart deployment/odoo
+kubectl -n odoo rollout status deployment/odoo
+```
+
+### New Python Dependencies
+
+```bash
+# 1. Update addons/requirements.txt
+# 2. Rebuild & push image
+make build
+make push
+
+# 3. Restart pods (pulls new image due to imagePullPolicy: Always)
+kubectl -n odoo rollout restart deployment/odoo
+```
+
+### Odoo Config Changes (odoo.conf)
+
+```bash
+# 1. Edit k8s/configmap.yaml
+# 2. Apply the new config
+kubectl apply -f k8s/configmap.yaml
+
+# 3. Restart pods to pick up the new config
+kubectl -n odoo rollout restart deployment/odoo
+```
+
+### K8s Manifest Changes (resources, replicas, etc.)
+
+```bash
+# 1. Edit the YAML file (e.g. k8s/odoo/deployment.yaml)
+# 2. Apply — K8s will do a rolling update automatically
+kubectl apply -f k8s/odoo/deployment.yaml
+kubectl -n odoo rollout status deployment/odoo
+```
+
+### Rollback (if something goes wrong)
+
+```bash
+# Undo the last deployment change
+kubectl -n odoo rollout undo deployment/odoo
+
+# Check rollout history
+kubectl -n odoo rollout history deployment/odoo
 ```
 
 ## Configuration
@@ -502,6 +558,66 @@ kubectl -n odoo top pods
 - **Scale down**: Removes 1 pod every 2 minutes, with 5-minute stabilization to prevent flapping
 
 > ⚠️ **Note**: `workers = 0` (gevent mode) is required in `configmap.yaml` for multi-replica scaling. Multi-process mode (`workers > 0`) should only be used with a single replica.
+
+### Monitoring (Prometheus + Grafana + Loki)
+
+Full production monitoring stack with metrics, dashboards, logs, and alerts.
+
+```
+┌─────────────────────────────────────────────────────┐
+│                 Grafana (UI)                         │
+│   Dashboards · Alerts · Logs   http://localhost:3000 │
+└─────────┬──────────────────┬────────────────────────┘
+          │                  │
+   ┌──────▼──────┐    ┌─────▼─────┐
+   │ Prometheus  │    │   Loki    │
+   │  (metrics)  │    │  (logs)   │
+   └──┬──────┬───┘    └─────┬─────┘
+      │      │              │
+   ┌──▼──┐ ┌─▼───────────┐ ┌▼────────┐
+   │Node │ │kube-state   │ │Promtail │
+   │Exp. │ │metrics + PG │ │(all pods)│
+   └─────┘ │Exporter     │ └─────────┘
+           └─────────────┘
+```
+
+**Prerequisites**: [Helm 3](https://helm.sh/docs/intro/install/)
+
+```bash
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+```
+
+**Deploy** (one command):
+```bash
+make monitor-deploy
+```
+
+**Access Grafana**:
+```bash
+make grafana
+# Open http://localhost:3000 → login: admin / admin
+```
+
+**Pre-configured alerts** (`monitoring/alerts.yaml`):
+
+| Alert | Severity | Triggers when |
+|-------|----------|---------------|
+| OdooPodCrashLooping | 🔴 Critical | Pod restarts repeatedly |
+| OdooPodsUnavailable | 🔴 Critical | Zero Odoo pods running |
+| OdooHighCPU | 🟡 Warning | CPU > 85% for 10 min |
+| OdooHighMemory | 🟡 Warning | Memory > 90% for 5 min |
+| OdooOOMKill | 🔴 Critical | Pod killed by out-of-memory |
+| OdooHPAMaxedOut | 🟡 Warning | HPA at max replicas for 15 min |
+| PostgresDown | 🔴 Critical | PostgreSQL not ready |
+| PostgresSlowQueries | 🟡 Warning | > 5 queries running > 5 sec |
+| PVCAlmostFull | 🟡 Warning | Persistent volume > 85% full |
+
+**Useful commands**:
+```bash
+make monitor-status    # Check monitoring pods
+make grafana           # Open Grafana
+make monitor-undeploy  # Remove monitoring
+```
 
 ## Architecture
 
