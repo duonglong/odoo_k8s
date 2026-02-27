@@ -31,12 +31,17 @@ spec:
             - sh
             - -c
             - |
-              echo "Waiting for PostgreSQL..."
-              until nc -z postgres 5432; do
+              echo "Waiting for PostgreSQL at $DB_HOST:$DB_PORT..."
+              until nc -z $DB_HOST $DB_PORT; do
                 echo "PostgreSQL not ready, retrying in 2s..."
                 sleep 2
               done
               echo "PostgreSQL is ready!"
+          env:
+            - name: DB_HOST
+              value: "192.168.56.1"
+            - name: DB_PORT
+              value: "5432"
       containers:
         - name: odoo
           image: docker.io/gnold/odoo-k8s:19.0
@@ -48,7 +53,7 @@ spec:
               name: longpolling
           env:
             - name: HOST
-              value: postgres
+              value: "192.168.56.1"   # External PostgreSQL (host machine)
             - name: PORT
               value: "5432"
             - name: USER

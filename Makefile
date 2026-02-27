@@ -1,5 +1,6 @@
-.PHONY: help build up down logs shell deploy undeploy k8s-logs k8s-shell status \
-       psql odoo-shell monitor-deploy monitor-undeploy grafana monitor-status
+.PHONY: help build push deploy undeploy restart status k8s-logs k8s-shell \
+       psql odoo-shell port-forward setup-metallb \
+       monitor-deploy monitor-undeploy grafana monitor-status
 
 # Load config from .env (single source of truth for registry/image)
 include .env
@@ -20,59 +21,37 @@ build: ## Build custom Odoo Docker image
 push: ## Push image to registry
 	docker push $(FULL_IMAGE)
 
-up: ## Start local dev environment (docker-compose)
-	docker compose up -d
-
-down: ## Stop local dev environment
-	docker compose down
-
-logs: ## Tail Odoo container logs (docker-compose)
-	docker compose logs -f odoo
-
-shell: ## Open shell in Odoo container
-	docker compose exec odoo bash
-
 # ─── Kubernetes ─────────────────────────────────────
 
-deploy: ## Deploy to Kubernetes
+deploy: ## Deploy everything to Kubernetes (except monitoring)
+	@echo "=== Setting up MetalLB ==="
+	kubectl apply -f k8s/metallb-native.yaml
+	kubectl -n metallb-system wait --for=condition=ready pod -l app=metallb --timeout=90s 2>/dev/null || true
+	kubectl apply -f k8s/metallb-config.yaml
+	@echo "=== Setting up Ingress Controller ==="
+	kubectl apply -f k8s/ingress-nginx.yaml
+	kubectl -n ingress-nginx wait --for=condition=ready pod -l app.kubernetes.io/component=controller --timeout=120s 2>/dev/null || true
+	kubectl -n ingress-nginx patch svc ingress-nginx-controller -p '{"spec":{"type":"LoadBalancer"}}' 2>/dev/null || true
+	@echo "=== Deploying Odoo ==="
 	kubectl apply -f k8s/namespace.yaml
 	kubectl apply -f k8s/secrets.yaml
 	kubectl apply -f k8s/configmap.yaml
-	kubectl apply -f k8s/postgres/
-	@echo "Waiting for PostgreSQL..."
-	kubectl -n $(NAMESPACE) rollout status statefulset/postgres --timeout=120s
 	kubectl apply -f k8s/odoo/
 	kubectl -n $(NAMESPACE) set image deployment/odoo odoo=$(FULL_IMAGE)
 	@echo "Waiting for Odoo..."
 	kubectl -n $(NAMESPACE) rollout status deployment/odoo --timeout=180s
 	kubectl apply -f k8s/ingress.yaml
 	@echo "✅ Deployment complete! Image: $(FULL_IMAGE)"
-	@kubectl -n $(NAMESPACE) get pods
+	@kubectl -n ingress-nginx get svc ingress-nginx-controller
+	@kubectl -n $(NAMESPACE) get pods -o wide
 
-undeploy: ## Remove from Kubernetes (preserves PVCs)
+undeploy: ## Remove from Kubernetes
 	kubectl delete -f k8s/ingress.yaml --ignore-not-found
 	kubectl delete -f k8s/odoo/ --ignore-not-found
-	kubectl delete -f k8s/postgres/ --ignore-not-found
 	kubectl delete -f k8s/configmap.yaml --ignore-not-found
 	kubectl delete -f k8s/secrets.yaml --ignore-not-found
-	@echo "⚠️  Namespace and PVCs preserved. To fully clean up:"
+	@echo "⚠️  Namespace preserved. To fully clean up:"
 	@echo "   kubectl delete namespace $(NAMESPACE)"
-
-status: ## Show K8s resources status
-	@echo "=== Pods ==="
-	@kubectl -n $(NAMESPACE) get pods
-	@echo "\n=== Services ==="
-	@kubectl -n $(NAMESPACE) get svc
-	@echo "\n=== PVCs ==="
-	@kubectl -n $(NAMESPACE) get pvc
-	@echo "\n=== Ingress ==="
-	@kubectl -n $(NAMESPACE) get ingress
-
-k8s-logs: ## Tail Odoo pod logs in K8s
-	kubectl -n $(NAMESPACE) logs -f deployment/odoo
-
-k8s-shell: ## Open shell in Odoo pod
-	kubectl -n $(NAMESPACE) exec -it deployment/odoo -- bash
 
 restart: ## Rolling restart Odoo pods (after addon/image changes)
 	kubectl apply -f k8s/odoo/
@@ -80,8 +59,26 @@ restart: ## Rolling restart Odoo pods (after addon/image changes)
 	kubectl -n $(NAMESPACE) rollout restart deployment/odoo
 	kubectl -n $(NAMESPACE) rollout status deployment/odoo --timeout=180s
 
-psql: ## Connect to PostgreSQL
-	kubectl -n $(NAMESPACE) exec -it postgres-0 -- psql -U odoo -d postgres
+status: ## Show K8s resources status
+	@echo "=== Nodes ==="
+	@kubectl get nodes -o wide
+	@echo "\n=== Odoo Pods ==="
+	@kubectl -n $(NAMESPACE) get pods -o wide
+	@echo "\n=== Services ==="
+	@kubectl -n $(NAMESPACE) get svc
+	@echo "\n=== Ingress ==="
+	@kubectl -n $(NAMESPACE) get ingress
+	@echo "\n=== HPA ==="
+	@kubectl -n $(NAMESPACE) get hpa
+
+k8s-logs: ## Tail Odoo pod logs in K8s
+	kubectl -n $(NAMESPACE) logs -f -l app.kubernetes.io/name=odoo --prefix
+
+k8s-shell: ## Open shell in Odoo pod
+	kubectl -n $(NAMESPACE) exec -it deployment/odoo -- bash
+
+psql: ## Connect to PostgreSQL (external)
+	psql -h 192.168.56.1 -U odoo -d $(DB_NAME)
 
 odoo-shell: ## Open Odoo interactive shell
 	kubectl -n $(NAMESPACE) exec -it deployment/odoo -- odoo shell -d $(DB_NAME) --no-http
@@ -89,6 +86,17 @@ odoo-shell: ## Open Odoo interactive shell
 port-forward: ## Port-forward Odoo (no Ingress needed)
 	@echo "Odoo available at http://localhost:8069"
 	kubectl -n $(NAMESPACE) port-forward svc/odoo 8069:8069 8072:8072
+
+# ─── Infrastructure ────────────────────────────────
+
+setup-metallb: ## Install MetalLB load balancer
+	kubectl apply -f k8s/metallb-native.yaml
+	kubectl -n metallb-system wait --for=condition=ready pod --all --timeout=90s
+	kubectl apply -f k8s/metallb-config.yaml
+	kubectl -n ingress-nginx patch svc ingress-nginx-controller \
+		-p '{"spec":{"type":"LoadBalancer"}}'
+	@echo "✅ MetalLB configured! Check external IP:"
+	@kubectl -n ingress-nginx get svc ingress-nginx-controller
 
 # ─── Monitoring ────────────────────────────────────
 

@@ -36,9 +36,7 @@ data:
     longpolling_port = 8072
     proxy_mode = True
 
-    ; Database (overridden by env vars)
-    db_host = postgres
-    db_port = 5432
+    ; Database — host/port/user/password are set via env vars in deployment.yaml
     db_name = False
     db_maxconn = 64
 

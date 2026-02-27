@@ -29,31 +29,7 @@ odoo_k8s/
 └── README.md
 ```
 
-## Option A: Quick Start — Local Dev (Docker Compose)
-
-The fastest way to get Odoo running locally. No Kubernetes needed.
-
-```bash
-cd ~/PycharmProjects/odoo_k8s
-
-# Start Odoo + PostgreSQL
-docker compose up -d
-
-# Open http://localhost:8069 in your browser
-# Odoo's database manager will appear
-
-# View logs
-docker compose logs -f odoo
-
-# Stop
-docker compose down
-```
-
-Or use the Makefile shortcuts: `make up`, `make logs`, `make down`.
-
----
-
-## Option B: Kubernetes Deployment
+## Kubernetes Deployment
 
 ### Step 1 — Install kubectl
 
@@ -65,102 +41,9 @@ sudo snap install kubectl --classic
 kubectl version --client
 ```
 
-### Step 2 — Choose Your Cluster Setup
+### Step 2 — Cluster Setup (kubeadm)
 
-Pick one of the three options below based on your goals:
-
-| Option | Setup Time | Realism | Best For |
-|--------|-----------|---------|----------|
-| **B1: Minikube (Simple)** | 5 min | ~70% | Quick testing, learning K8s basics |
-| **B2: Minikube + VirtualBox** | 10 min | ~85% | Production simulation with VM isolation |
-| **B3: kubeadm (Manual)** | 1-2 hours | ~95% | Learning K8s internals, real production setup |
-
----
-
-<details>
-<summary><b>B1: Minikube — Simple (Docker driver)</b></summary>
-
-#### Install
-
-```bash
-sudo snap install minikube
-```
-
-#### Start
-
-```bash
-minikube start --memory=4096 --cpus=2
-```
-
-#### Enable Ingress
-
-```bash
-minikube addons enable ingress
-```
-
-</details>
-
----
-
-<details>
-<summary><b>B2: Minikube + VirtualBox — Multi-Node (Recommended for production simulation)</b></summary>
-
-Runs multiple K8s nodes as separate VirtualBox VMs. Closer to a real production cluster.
-
-#### Prerequisites
-
-```bash
-# Install VirtualBox
-sudo apt update
-sudo apt install -y virtualbox virtualbox-dkms
-
-# Install minikube
-sudo snap install minikube
-
-# Verify hardware virtualization is enabled
-grep -E '(vmx|svm)' /proc/cpuinfo | head -1
-# If output is empty → enable VT-x/AMD-V in BIOS
-```
-
-#### Start Multi-Node Cluster
-
-```bash
-minikube start \
-  --driver=virtualbox \
-  --nodes=3 \
-  --memory=4096 \
-  --cpus=2 \
-  --disk-size=30g \
-  --kubernetes-version=v1.29.0
-```
-
-This creates:
-- **Node 1** — Control plane + worker
-- **Node 2** — Worker
-- **Node 3** — Worker
-
-#### Enable Ingress
-
-```bash
-minikube addons enable ingress
-```
-
-#### Verify Nodes
-
-```bash
-kubectl get nodes
-# NAME           STATUS   ROLES           AGE   VERSION
-# minikube       Ready    control-plane   1m    v1.29.0
-# minikube-m02   Ready    <none>          1m    v1.29.0
-# minikube-m03   Ready    <none>          1m    v1.29.0
-```
-
-</details>
-
----
-
-<details>
-<summary><b>B3: kubeadm — Manual Setup (Host as Control Plane + VM Workers)</b></summary>
+<summary><b>kubeadm — Host as Control Plane + VM Workers</b></summary>
 
 Your laptop runs the **control plane**, VirtualBox VMs run as **worker nodes**. This is how real production clusters are built.
 
@@ -325,27 +208,9 @@ kubectl get nodes -o wide
 #### 3.7 — Install Nginx Ingress Controller
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/baremetal/deploy.yaml
+kubectl apply -f k8s/ingress-nginx.yaml
 ```
 
-#### 3.8 — Install Storage Provisioner
-
-kubeadm clusters don't include a storage provisioner by default, so PersistentVolumeClaims will stay `Pending` without one.
-
-```bash
-# Install local-path-provisioner (by Rancher)
-kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.26/deploy/local-path-storage.yaml
-
-# Set it as the default StorageClass
-kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
-
-# Verify
-kubectl get storageclass
-# NAME                   PROVISIONER             AGE
-# local-path (default)   rancher.io/local-path   10s
-```
-
-</details>
 
 ---
 
@@ -363,15 +228,11 @@ kubectl apply -f k8s/namespace.yaml
 kubectl apply -f k8s/secrets.yaml
 kubectl apply -f k8s/configmap.yaml
 
-# 3. Deploy PostgreSQL and wait for it
-kubectl apply -f k8s/postgres/
-kubectl -n odoo rollout status statefulset/postgres --timeout=120s
-
-# 4. Deploy Odoo and wait for it
+# 3. Deploy Odoo and wait for it
 kubectl apply -f k8s/odoo/
 kubectl -n odoo rollout status deployment/odoo --timeout=180s
 
-# 5. Create Ingress
+# 4. Create Ingress
 kubectl apply -f k8s/ingress.yaml
 ```
 
@@ -385,17 +246,11 @@ kubectl -n odoo port-forward svc/odoo 8069:8069 8072:8072
 # → http://localhost:8069
 ```
 
-**Via Ingress** (minikube):
-```bash
-minikube ip
-# Add to /etc/hosts: <IP>  odoo.local
-# → http://odoo.local
-```
 
 **Via Ingress** (kubeadm + MetalLB):
 ```bash
 # 1. Install MetalLB (gives LoadBalancer IPs on bare-metal)
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.9/config/manifests/metallb-native.yaml
+kubectl apply -f k8s/metallb-native.yaml
 kubectl -n metallb-system wait --for=condition=ready pod --all --timeout=90s
 
 # 2. Configure IP pool
@@ -429,9 +284,6 @@ make k8s-shell    # Shell into Odoo container
 make undeploy                    # Remove (preserves data volumes)
 kubectl delete namespace odoo    # Full cleanup
 
-# Minikube
-minikube stop                    # Stop cluster
-minikube delete                  # Delete cluster
 
 # kubeadm (on each worker VM)
 sudo kubeadm reset
@@ -588,8 +440,6 @@ kubectl patch deployment metrics-server -n kube-system \
   --type='json' \
   -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--kubelet-insecure-tls"}]'
 
-# For minikube
-minikube addons enable metrics-server
 ```
 
 **Apply HPA**:
