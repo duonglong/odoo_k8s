@@ -1,0 +1,29 @@
+# MetalLB Configuration for bare-metal Kubernetes
+# Assigns real IPs from your network to LoadBalancer services
+#
+# Install MetalLB first:
+#   kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.9/config/manifests/metallb-native.yaml
+#   kubectl -n metallb-system wait --for=condition=ready pod --all --timeout=90s
+#
+# Then apply this config:
+#   kubectl apply -f k8s/metallb-config.yaml
+---
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: default-pool
+  namespace: metallb-system
+spec:
+  addresses:
+    # Reserve a range of IPs on your host-only network (192.168.56.x)
+    # Make sure these IPs are NOT used by VMs or DHCP
+    - 192.168.56.200-192.168.56.210
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: default
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+    - default-pool
