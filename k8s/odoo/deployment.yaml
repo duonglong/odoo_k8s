@@ -46,6 +46,8 @@ spec:
         - name: odoo
           image: docker.io/gnold/odoo-k8s:19.0
           imagePullPolicy: Always
+          # Disable cron on web pods — handled by cron-deployment
+          args: ["--max-cron-threads=0"]
           ports:
             - containerPort: 8069
               name: http

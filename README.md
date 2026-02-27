@@ -1,31 +1,33 @@
 # Odoo on Kubernetes
 
-Deploy Odoo 19.0 with PostgreSQL on Kubernetes.
+Deploy Odoo 19.0 on Kubernetes.
 
 ## Project Structure
 
 ```
 odoo_k8s/
-├── docker/                  # Docker image files
-│   ├── Dockerfile
-│   ├── odoo.conf
-│   ├── entrypoint.sh
-│   └── wait-for-it.sh
-├── addons/                  # Custom Odoo addons
-├── k8s/                     # Kubernetes manifests
+├── docker/                      # Docker image files
+│   ├── Dockerfile               #   extends odoo:19.0
+│   ├── requirements.txt         #   Python dependencies
+│   ├── entrypoint.sh            #   official Odoo entrypoint
+│   └── wait-for-psql.py         #   DB readiness check
+├── addons/                      # Custom Odoo addons (baked into image)
+├── k8s/                         # Kubernetes manifests
 │   ├── namespace.yaml
-│   ├── configmap.yaml
-│   ├── secrets.yaml
-│   ├── ingress.yaml
-│   ├── postgres/
-│   │   ├── statefulset.yaml
-│   │   └── service.yaml
+│   ├── configmap.yaml           #   odoo.conf
+│   ├── secrets.yaml             #   DB credentials
+│   ├── ingress.yaml             #   routing rules
+│   ├── ingress-nginx.yaml       #   Nginx Ingress controller
+│   ├── metallb-native.yaml      #   MetalLB load balancer
+│   ├── metallb-config.yaml      #   MetalLB IP pool
 │   └── odoo/
-│       ├── deployment.yaml
-│       ├── service.yaml
-│       └── pvc.yaml
-├── docker-compose.yaml      # Local dev
-├── Makefile                 # Shortcuts
+│       ├── deployment.yaml      #   Odoo web pods (stateless, no cron)
+│       ├── cron-deployment.yaml #   Odoo cron worker (single replica)
+│       ├── service.yaml         #   ClusterIP service
+│       └── hpa.yaml             #   Horizontal Pod Autoscaler
+├── monitoring/                  # Prometheus + Grafana stack
+├── Makefile                     # All commands (make help)
+├── .env                         # Registry/image config
 └── README.md
 ```
 

@@ -56,7 +56,8 @@ undeploy: ## Remove from Kubernetes
 restart: ## Rolling restart Odoo pods (after addon/image changes)
 	kubectl apply -f k8s/odoo/
 	kubectl -n $(NAMESPACE) set image deployment/odoo odoo=$(FULL_IMAGE)
-	kubectl -n $(NAMESPACE) rollout restart deployment/odoo
+	kubectl -n $(NAMESPACE) set image deployment/odoo-cron odoo-cron=$(FULL_IMAGE)
+	kubectl -n $(NAMESPACE) rollout restart deployment/odoo deployment/odoo-cron
 	kubectl -n $(NAMESPACE) rollout status deployment/odoo --timeout=180s
 
 status: ## Show K8s resources status
