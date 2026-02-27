@@ -12,8 +12,7 @@ data:
     addons_path = /mnt/extra-addons
     data_dir = /var/lib/odoo
 
-    ; Admin
-    admin_passwd = False
+    ; Admin — admin_passwd is set via --admin_passwd arg from secrets.yaml
     list_db = True
 
     ; Performance — workers=0 (gevent mode) for HPA multi-replica scaling
@@ -43,3 +42,17 @@ data:
     ; Storage — store attachments in DB for multi-pod sharing (no shared filesystem needed)
     ; For production, use S3: ir_attachment.location = s3 (requires odoo-s3 module)
     ir_attachment.location = db
+---
+# Shared environment variables for all Odoo pods (web + cron)
+# Change DB_HOST here — both deployments pick it up automatically
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: odoo-env
+  namespace: odoo
+  labels:
+    app.kubernetes.io/name: odoo
+    app.kubernetes.io/component: env
+data:
+  DB_HOST: "192.168.56.1"
+  DB_PORT: "5432"

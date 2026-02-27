@@ -23,8 +23,29 @@ spec:
         app.kubernetes.io/component: web
         app.kubernetes.io/part-of: odoo-stack
     spec:
-      # Ensure Odoo starts after PostgreSQL is available
       initContainers:
+        # 1. Merge admin_passwd from Secret into odoo.conf
+        - name: build-config
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              cp /config-template/odoo.conf /config/odoo.conf
+              echo "admin_passwd = $ADMIN_PASSWD" >> /config/odoo.conf
+              echo "Config built with admin_passwd injected."
+          env:
+            - name: ADMIN_PASSWD
+              valueFrom:
+                secretKeyRef:
+                  name: odoo-secrets
+                  key: admin-password
+          volumeMounts:
+            - name: odoo-config-template
+              mountPath: /config-template
+            - name: odoo-config
+              mountPath: /config
+        # 2. Wait for PostgreSQL
         - name: wait-for-db
           image: busybox:1.36
           command:
@@ -37,11 +58,9 @@ spec:
                 sleep 2
               done
               echo "PostgreSQL is ready!"
-          env:
-            - name: DB_HOST
-              value: "192.168.56.1"
-            - name: DB_PORT
-              value: "5432"
+          envFrom:
+            - configMapRef:
+                name: odoo-env
       containers:
         - name: odoo
           image: docker.io/gnold/odoo-k8s:19.0
@@ -54,10 +73,17 @@ spec:
             - containerPort: 8072
               name: longpolling
           env:
+            # Map DB_HOST/DB_PORT → HOST/PORT (Odoo entrypoint expects HOST/PORT)
             - name: HOST
-              value: "192.168.56.1"   # External PostgreSQL (host machine)
+              valueFrom:
+                configMapKeyRef:
+                  name: odoo-env
+                  key: DB_HOST
             - name: PORT
-              value: "5432"
+              valueFrom:
+                configMapKeyRef:
+                  name: odoo-env
+                  key: DB_PORT
             - name: USER
               valueFrom:
                 secretKeyRef:
@@ -100,7 +126,9 @@ spec:
               readOnly: true
       volumes:
         - name: odoo-data
-          emptyDir: {}  # Stateless — files stored in S3/DB, not local disk
+          emptyDir: {}
         - name: odoo-config
+          emptyDir: {}  # Populated by build-config init container
+        - name: odoo-config-template
           configMap:
             name: odoo-config
