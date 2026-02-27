@@ -392,9 +392,27 @@ minikube ip
 # → http://odoo.local
 ```
 
-**Via Ingress** (kubeadm):
+**Via Ingress** (kubeadm + MetalLB):
 ```bash
-# → http://odoo.local (add 192.168.56.1 odoo.local to /etc/hosts)
+# 1. Install MetalLB (gives LoadBalancer IPs on bare-metal)
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.9/config/manifests/metallb-native.yaml
+kubectl -n metallb-system wait --for=condition=ready pod --all --timeout=90s
+
+# 2. Configure IP pool
+kubectl apply -f k8s/metallb-config.yaml
+
+# 3. Switch Ingress controller to LoadBalancer
+kubectl -n ingress-nginx patch svc ingress-nginx-controller \
+  -p '{"spec":{"type":"LoadBalancer"}}'
+
+# 4. Get the assigned external IP
+kubectl -n ingress-nginx get svc ingress-nginx-controller
+# EXTERNAL-IP: 192.168.56.200
+
+# 5. Add to /etc/hosts
+echo "192.168.56.200 odoo.local" | sudo tee -a /etc/hosts
+
+# → http://odoo.local
 ```
 
 ### Step 5 — Verify & Manage
@@ -489,6 +507,41 @@ kubectl -n odoo rollout undo deployment/odoo
 
 # Check rollout history
 kubectl -n odoo rollout history deployment/odoo
+```
+
+## Testing Load Balancing
+
+> ⚠️ `port-forward` connects to a **single pod** only. To test real load balancing, go through the Ingress or Service.
+
+**Via Ingress (NodePort):**
+```bash
+# Find the NodePort
+kubectl -n ingress-nginx get svc ingress-nginx-controller
+
+# Send requests through Ingress (replace 31080 with your NodePort)
+for i in $(seq 1 20); do
+  curl -s -o /dev/null -H "Host: odoo.local" http://192.168.56.101:31080/web/health &
+done
+wait
+
+# Check which pods handled requests
+kubectl -n odoo logs -l app.kubernetes.io/name=odoo --tail=10 --prefix
+```
+
+**Via Service (from inside the cluster):**
+```bash
+kubectl run test --rm -it --image=busybox -- sh -c '
+  for i in $(seq 1 20); do
+    wget -qO- http://odoo.odoo:8069/web/health 2>/dev/null &
+  done
+  wait
+'
+```
+
+**Verify endpoints** (both pod IPs should be listed):
+```bash
+kubectl -n odoo get endpoints odoo
+# Should show: 10.244.1.x:8069, 10.244.2.x:8069
 ```
 
 ## Configuration

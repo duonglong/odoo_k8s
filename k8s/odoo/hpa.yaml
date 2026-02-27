@@ -12,8 +12,8 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: odoo
-  minReplicas: 4
-  maxReplicas: 5
+  minReplicas: 2
+  maxReplicas: 3
   metrics:
     # Scale based on CPU usage
     - type: Resource
