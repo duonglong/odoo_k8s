@@ -15,8 +15,8 @@ metadata:
   namespace: metallb-system
 spec:
   addresses:
-    # Reserve a range of IPs on your host-only network (192.168.56.x)
-    # Make sure these IPs are NOT used by VMs or DHCP
+    # Reserve a range of unused IPs on your network
+    # Adjust this to match your actual network (e.g., 10.0.0.200-10.0.0.210)
     - 192.168.56.200-192.168.56.210
 ---
 apiVersion: metallb.io/v1beta1

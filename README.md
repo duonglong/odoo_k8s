@@ -43,57 +43,61 @@ kubectl version --client
 
 ### Step 2 — Cluster Setup (kubeadm)
 
-<summary><b>kubeadm — Host as Control Plane + VM Workers</b></summary>
-
-Your laptop runs the **control plane**, VirtualBox VMs run as **worker nodes**. This is how real production clusters are built.
+Your **control plane** node manages the cluster, **worker nodes** run Odoo. All nodes should be on the same network and reachable by IP.
 
 #### Architecture
 
 ```
-┌────────────────────────────────────────────────┐
-│ Your Laptop (Host) — Control Plane             │
-│  • kube-apiserver, etcd, scheduler             │
-│  • kubectl configured here                     │
-│                                                │
-│   ┌──────────────────┐  ┌──────────────────┐   │
-│   │ VirtualBox VM 1  │  │ VirtualBox VM 2  │   │
-│   │ Worker Node      │  │ Worker Node      │   │
-│   │ 192.168.56.101   │  │ 192.168.56.102   │   │
-│   │ 2 CPU, 4GB RAM   │  │ 2 CPU, 4GB RAM   │   │
-│   └──────────────────┘  └──────────────────┘   │
-└────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│ Network: 10.0.0.0/24                                    │
+│                                                         │
+│ ┌───────────────────┐                                   │
+│ │ Control Plane     │  10.0.0.10                        │
+│ │ • kube-apiserver  │  • Ubuntu 22.04+                  │
+│ │ • etcd, scheduler │  • 2 CPU, 4GB RAM, 30GB disk      │
+│ │ • kubectl         │                                   │
+│ └───────────────────┘                                   │
+│                                                         │
+│ ┌───────────────────┐  ┌───────────────────┐            │
+│ │ Worker Node 1     │  │ Worker Node 2     │            │
+│ │ 10.0.0.11         │  │ 10.0.0.12         │            │
+│ │ 2 CPU, 4GB RAM    │  │ 2 CPU, 4GB RAM    │            │
+│ │ 30GB disk         │  │ 30GB disk         │            │
+│ └───────────────────┘  └───────────────────┘            │
+└─────────────────────────────────────────────────────────┘
 ```
 
-#### 3.1 — Create VirtualBox VMs
+> Replace `10.0.0.x` with your actual server IPs throughout this guide.
 
-1. Download [Ubuntu Server 22.04 ISO](https://ubuntu.com/download/server)
-2. Create 2 VMs in VirtualBox:
-   - **CPU**: 2 cores, **RAM**: 4096 MB, **Disk**: 20 GB
+#### 2.1 — Prerequisites (ALL nodes)
+
+Ensure all nodes have:
+- Ubuntu 22.04+ (or equivalent)
+- Static IPs assigned
+- SSH access configured
+- Unique hostnames: `sudo hostnamectl set-hostname <name>`
+
+<details>
+<summary>📦 Using VirtualBox VMs instead of real servers?</summary>
+
+1. Create 2+ VMs in VirtualBox:
+   - **CPU**: 2 cores, **RAM**: 4GB, **Disk**: 30GB
    - **Network Adapter 1**: NAT (for internet)
    - **Network Adapter 2**: Host-Only Adapter (`vboxnet0`, for cluster communication)
-3. Install Ubuntu Server on each VM
-4. Assign static IPs on the Host-Only interface:
-
+2. Assign static IPs on the Host-Only interface:
 ```bash
-# On VM 1 — edit /etc/netplan/01-host-only.yaml
+# /etc/netplan/01-host-only.yaml (on each VM)
 network:
   version: 2
   ethernets:
     enp0s8:
-      addresses: [192.168.56.101/24]
+      addresses: [192.168.56.101/24]  # .102 for VM 2, etc.
 
-# On VM 2
-network:
-  version: 2
-  ethernets:
-    enp0s8:
-      addresses: [192.168.56.102/24]
-
-# Apply
 sudo netplan apply
 ```
+</details>
 
-#### 3.2 — Install Container Runtime (ALL machines: host + VMs)
+#### 2.2 — Install Container Runtime (ALL nodes)
 
 ```bash
 # Load required kernel modules
@@ -126,7 +130,7 @@ sudo swapoff -a
 sudo sed -i '/ swap / s/^/#/' /etc/fstab
 ```
 
-#### 3.3 — Install kubeadm, kubelet, kubectl (ALL machines)
+#### 2.3 — Install kubeadm, kubelet, kubectl (ALL nodes)
 
 ```bash
 sudo apt install -y apt-transport-https ca-certificates curl gpg
@@ -142,11 +146,11 @@ sudo apt install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
 ```
 
-#### 3.4 — Initialize Control Plane (on your laptop only)
+#### 2.4 — Initialize Control Plane (control plane node only)
 
 ```bash
 sudo kubeadm init \
-  --apiserver-advertise-address=192.168.56.1 \
+  --apiserver-advertise-address=10.0.0.10 \
   --pod-network-cidr=10.244.0.0/16
 
 # Set up kubectl for your user
@@ -155,57 +159,63 @@ sudo cp /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 # Install Flannel CNI (pod network)
-# IMPORTANT: must specify --iface-regex so Flannel uses the Host-Only adapter,
-# not the NAT adapter. Host uses 'vboxnet0', VMs use 'enp0s8'.
+kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+```
+
+<details>
+<summary>⚠️ Using VirtualBox? Flannel needs an extra flag</summary>
+
+VirtualBox VMs have two network adapters (NAT + Host-Only). Flannel may pick the wrong one. Fix:
+```bash
+# Download, patch, and apply Flannel
 curl -o /tmp/flannel.yaml https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
 sed -i '/- --kube-subnet-mgr/a\        - --iface-regex=vboxnet0|enp0s8' /tmp/flannel.yaml
 kubectl apply -f /tmp/flannel.yaml
 ```
+</details>
 
-#### 3.5 — Join Worker Nodes (on each VM)
+#### 2.5 — Join Worker Nodes (on each worker)
 
-The `kubeadm init` output will print a join command. Run it on each VM:
+The `kubeadm init` output prints a join command. Run it on each worker:
 
 ```bash
-# On VM 1 and VM 2
-sudo kubeadm join 192.168.56.1:6443 \
+sudo kubeadm join 10.0.0.10:6443 \
   --token <token> \
   --discovery-token-ca-cert-hash sha256:<hash>
 ```
 
-If you lost the token, regenerate it on the host:
+If you lost the token, regenerate on the control plane:
 ```bash
 kubeadm token create --print-join-command
 ```
 
-#### 3.5.1 — Fix Kubelet Node IP (VirtualBox only — IMPORTANT!)
+<details>
+<summary>⚠️ Using VirtualBox? Fix kubelet node IP</summary>
 
-> ⚠️ **VirtualBox VMs have two network adapters**: NAT (`10.0.2.15`) and Host-Only (`192.168.56.x`). By default, kubelet registers with the NAT IP, which is **unreachable from the host**. This causes `i/o timeout` errors when the control plane tries to talk to pods on the workers.
-
-On **each worker VM**, configure kubelet to use the Host-Only IP:
-
+VirtualBox VMs register with the NAT IP (`10.0.2.15`) by default, which is unreachable. Fix on **each worker VM**:
 ```bash
-# On VM 1 (worker-1)
+# On VM 1
 echo 'KUBELET_EXTRA_ARGS="--node-ip=192.168.56.101"' | sudo tee /etc/default/kubelet
 sudo systemctl restart kubelet
 
-# On VM 2 (worker-2)
+# On VM 2
 echo 'KUBELET_EXTRA_ARGS="--node-ip=192.168.56.102"' | sudo tee /etc/default/kubelet
 sudo systemctl restart kubelet
 ```
+Verify nodes show `192.168.56.x` IPs (not `10.0.2.15`) in `kubectl get nodes -o wide`.
+</details>
 
-#### 3.6 — Verify Cluster
+#### 2.6 — Verify Cluster
 
 ```bash
-# On your laptop — check nodes show the 192.168.56.x IPs (not 10.0.2.15)
 kubectl get nodes -o wide
-# NAME        STATUS   ROLES           AGE   VERSION   INTERNAL-IP
-# laptop      Ready    control-plane   2m    v1.29.0   192.168.56.1
-# worker-1    Ready    <none>          1m    v1.29.0   192.168.56.101
-# worker-2    Ready    <none>          1m    v1.29.0   192.168.56.102
+# NAME           STATUS   ROLES           AGE   VERSION   INTERNAL-IP
+# control-plane  Ready    control-plane   2m    v1.29.0   10.0.0.10
+# worker-1       Ready    <none>          1m    v1.29.0   10.0.0.11
+# worker-2       Ready    <none>          1m    v1.29.0   10.0.0.12
 ```
 
-#### 3.7 — Install Nginx Ingress Controller
+#### 2.7 — Install Nginx Ingress Controller
 
 ```bash
 kubectl apply -f k8s/ingress-nginx.yaml
@@ -262,10 +272,10 @@ kubectl -n ingress-nginx patch svc ingress-nginx-controller \
 
 # 4. Get the assigned external IP
 kubectl -n ingress-nginx get svc ingress-nginx-controller
-# EXTERNAL-IP: 192.168.56.200
+# EXTERNAL-IP: 10.0.0.200
 
-# 5. Add to /etc/hosts
-echo "192.168.56.200 odoo.local" | sudo tee -a /etc/hosts
+# 5. Add to /etc/hosts (or configure DNS)
+echo "10.0.0.200 odoo.local" | sudo tee -a /etc/hosts
 
 # → http://odoo.local
 ```
@@ -281,13 +291,12 @@ make k8s-shell    # Shell into Odoo container
 ### Tear Down
 
 ```bash
-make undeploy                    # Remove (preserves data volumes)
+make undeploy                    # Remove Odoo from K8s
 kubectl delete namespace odoo    # Full cleanup
 
-
-# kubeadm (on each worker VM)
+# Reset kubeadm (on each worker node)
 sudo kubeadm reset
-# kubeadm (on host)
+# Reset kubeadm (on control plane)
 sudo kubeadm reset
 ```
 
