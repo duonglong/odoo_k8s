@@ -14,8 +14,10 @@ odoo_k8s/
 ├── addons/                      # Custom Odoo addons (baked into image)
 ├── k8s/                         # Kubernetes manifests
 │   ├── namespace.yaml
-│   ├── configmap.yaml           #   odoo.conf
-│   ├── secrets.yaml             #   DB credentials
+│   ├── configmap.yaml           #   odoo.conf + shared env vars
+│   ├── secrets.yaml             #   plain-text secrets (⚠️ gitignored)
+│   ├── sealed-secrets.yaml      #   encrypted secrets (safe to commit)
+│   ├── sealed-secrets-controller.yaml  # Sealed Secrets controller
 │   ├── ingress.yaml             #   routing rules
 │   ├── ingress-nginx.yaml       #   Nginx Ingress controller
 │   ├── metallb-native.yaml      #   MetalLB load balancer
@@ -290,6 +292,53 @@ make k8s-logs     # Tail Odoo logs
 make k8s-shell    # Shell into Odoo container
 ```
 
+---
+
+### Secrets Management (Sealed Secrets)
+
+Secrets are encrypted with [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) — safe to commit to git.
+
+```
+k8s/secrets.yaml              k8s/sealed-secrets.yaml
+(plain text, gitignored)       (encrypted, committed to git)
+        │                              │
+        └── make seal-secrets ─────────┘
+                                       │
+                              kubectl apply → controller decrypts → K8s Secret
+```
+
+#### How it works
+
+- A **controller** in the cluster holds a private key
+- `kubeseal` encrypts secrets with the controller's public key
+- Only the cluster can decrypt → sealed file is safe in git
+- The controller creates a standard K8s Secret that pods read normally
+
+#### Updating secrets
+
+```bash
+# 1. Edit plain-text secrets locally
+vim k8s/secrets.yaml    # update base64-encoded values
+
+# 2. Re-seal
+make seal-secrets
+
+# 3. Apply and restart
+kubectl apply -f k8s/sealed-secrets.yaml
+make restart
+
+# 4. Commit the sealed version
+git add k8s/sealed-secrets.yaml
+git commit -m "Update sealed secrets"
+```
+
+> [!IMPORTANT]
+> **Backup the controller's private key!** If you lose it (cluster rebuild), you can't decrypt existing sealed secrets.
+> ```bash
+> kubectl -n kube-system get secret -l sealedsecrets.bitnami.com/sealed-secrets-key -o yaml > sealed-secrets-key-backup.yaml
+> # Store this backup securely — NOT in git!
+> ```
+
 ### Tear Down
 
 ```bash
@@ -302,21 +351,186 @@ sudo kubeadm reset
 sudo kubeadm reset
 ```
 
+---
+
+### Troubleshooting
+
+<details>
+<summary><b>502 Bad Gateway</b></summary>
+
+Ingress can't reach the backend pods.
+
+```bash
+# Check if pods are running and ready
+kubectl -n odoo get pods -l app.kubernetes.io/component=web
+
+# Check Ingress has endpoints
+kubectl -n odoo get endpoints odoo
+# Should show pod IPs, not <none>
+
+# Check Ingress resource exists
+kubectl -n odoo get ingress
+# If empty → kubectl apply -f k8s/ingress.yaml
+```
+
+**Common causes:**
+- Pods still starting (wait for `1/1 Running`)
+- Ingress not applied (`kubectl apply -f k8s/ingress.yaml`)
+- Service selector doesn't match pod labels
+</details>
+
+<details>
+<summary><b>CrashLoopBackOff</b></summary>
+
+Pod starts but crashes immediately.
+
+```bash
+# Check why it crashed
+kubectl -n odoo logs <pod-name> -c odoo --previous
+
+# Check init container logs
+kubectl -n odoo logs <pod-name> -c build-config
+kubectl -n odoo logs <pod-name> -c wait-for-db
+```
+
+**Common causes:**
+- PostgreSQL unreachable (check `pg_hba.conf` and `listen_addresses`)
+- Wrong DB credentials in `secrets.yaml`
+- Using `command` instead of `args` (bypasses entrypoint)
+</details>
+
+<details>
+<summary><b>PostgreSQL connection refused</b></summary>
+
+```
+connection to server at "192.168.56.1", port 5432 failed: FATAL: no pg_hba.conf entry
+```
+
+Fix on your PostgreSQL host:
+
+```bash
+# 1. Allow connections from your network
+echo "host all all 192.168.56.0/24 md5" | sudo tee -a /etc/postgresql/*/main/pg_hba.conf
+
+# 2. Listen on all interfaces
+sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/" /etc/postgresql/*/main/postgresql.conf
+
+# 3. Restart
+sudo systemctl restart postgresql
+```
+</details>
+
+<details>
+<summary><b>Pod evicted — disk pressure</b></summary>
+
+```
+The node was low on resource: ephemeral-storage
+```
+
+Worker node disk is full.
+
+```bash
+# Check disk on the node
+ssh <node> 'df -h / && sudo crictl rmi --prune'
+
+# If still low, resize the disk (VirtualBox example)
+VBoxManage modifymedium disk /path/to/disk.vdi --resize 30720
+# Then expand LVM inside the VM
+ssh <node>
+sudo growpart /dev/sda 3
+sudo pvresize /dev/sda3
+sudo lvextend -l +100%FREE /dev/mapper/ubuntu--vg-ubuntu--lv
+sudo resize2fs /dev/mapper/ubuntu--vg-ubuntu--lv
+```
+
+**Minimum recommended**: 30GB per node.
+</details>
+
+<details>
+<summary><b>HPA: unable to get metrics</b></summary>
+
+```
+failed to get cpu utilization: unable to get metrics for resource cpu
+```
+
+Metrics server is not working.
+
+```bash
+# Check if metrics-server is running
+kubectl -n kube-system get pods -l k8s-app=metrics-server
+
+# Test metrics
+kubectl top nodes
+kubectl top pods -n odoo
+
+# If not installed
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+# For kubeadm with self-signed certs
+kubectl -n kube-system patch deployment metrics-server --type='json' \
+  -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
+```
+</details>
+
+<details>
+<summary><b>Ingress returns 404</b></summary>
+
+Pods are running but Ingress returns 404.
+
+```bash
+# Check Ingress exists
+kubectl -n odoo get ingress
+# If empty → kubectl apply -f k8s/ingress.yaml
+
+# Verify host matches
+kubectl -n odoo describe ingress odoo-ingress
+# Host should match what's in /etc/hosts
+
+# Check /etc/hosts
+cat /etc/hosts | grep odoo
+# Should point to MetalLB external IP
+kubectl -n ingress-nginx get svc ingress-nginx-controller
+```
+</details>
+
+<details>
+<summary><b>Pods stuck in Pending — node taints</b></summary>
+
+```
+0/3 nodes are available: 1 node(s) had untolerated taint {node-role.kubernetes.io/control-plane: }
+```
+
+```bash
+# Check node taints
+kubectl describe nodes | grep -A2 Taints
+
+# Allow scheduling on control plane (dev/testing only)
+kubectl taint nodes <control-plane> node-role.kubernetes.io/control-plane:NoSchedule-
+
+# Check if worker nodes are Ready
+kubectl get nodes
+# If NotReady — check kubelet logs on the worker
+ssh <node> 'sudo journalctl -u kubelet --no-pager -n 50'
+```
+</details>
+
+
 ### All Makefile Commands
 
 ```bash
-make help        # Show all available commands
-make build       # Build custom Docker image
-make push        # Push image to registry
-make up / down   # Docker Compose lifecycle
-make deploy      # Deploy to K8s
-make undeploy    # Remove from K8s
-make status      # Show K8s resource status
-make k8s-logs    # Tail Odoo pod logs
-make k8s-shell   # Shell into Odoo pod
-make psql        # Connect to PostgreSQL (psql)
-make odoo-shell  # Open Odoo interactive shell
+make help         # Show all available commands
+make build        # Build custom Docker image
+make push         # Push image to registry
+make deploy       # Deploy everything to K8s
+make undeploy     # Remove from K8s
+make restart      # Rolling restart (after code/image changes)
+make status       # Show K8s resource status
+make k8s-logs     # Tail Odoo pod logs
+make k8s-shell    # Shell into Odoo pod
+make psql         # Connect to PostgreSQL (psql)
+make odoo-shell   # Open Odoo interactive shell
 make port-forward # Port-forward Odoo locally
+make seal-secrets # Encrypt secrets (safe to commit)
 ```
 
 ## Rolling Out Changes

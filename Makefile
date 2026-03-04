@@ -1,5 +1,5 @@
 .PHONY: help build push deploy undeploy restart status k8s-logs k8s-shell \
-       psql odoo-shell port-forward setup-metallb \
+       psql odoo-shell port-forward seal-secrets \
        monitor-deploy monitor-undeploy grafana monitor-status
 
 # Load config from .env (single source of truth for registry/image)
@@ -16,7 +16,7 @@ help: ## Show this help
 # ─── Docker ─────────────────────────────────────────
 
 build: ## Build custom Odoo Docker image
-	docker build -t $(FULL_IMAGE) -f docker/Dockerfile .
+	docker build --no-cache -t $(FULL_IMAGE) -f docker/Dockerfile .
 
 push: ## Push image to registry
 	docker push $(FULL_IMAGE)
@@ -32,9 +32,12 @@ deploy: ## Deploy everything to Kubernetes (except monitoring)
 	kubectl apply -f k8s/ingress-nginx.yaml
 	kubectl -n ingress-nginx wait --for=condition=ready pod -l app.kubernetes.io/component=controller --timeout=120s 2>/dev/null || true
 	kubectl -n ingress-nginx patch svc ingress-nginx-controller -p '{"spec":{"type":"LoadBalancer"}}' 2>/dev/null || true
+	@echo "=== Setting up Sealed Secrets ==="
+	kubectl apply -f k8s/sealed-secrets-controller.yaml
+	kubectl -n kube-system wait --for=condition=ready pod -l name=sealed-secrets-controller --timeout=90s 2>/dev/null || true
 	@echo "=== Deploying Odoo ==="
 	kubectl apply -f k8s/namespace.yaml
-	kubectl apply -f k8s/secrets.yaml
+	kubectl apply -f k8s/sealed-secrets.yaml
 	kubectl apply -f k8s/configmap.yaml
 	kubectl apply -f k8s/odoo/
 	kubectl -n $(NAMESPACE) set image deployment/odoo odoo=$(FULL_IMAGE)
@@ -49,7 +52,6 @@ undeploy: ## Remove from Kubernetes
 	kubectl delete -f k8s/ingress.yaml --ignore-not-found
 	kubectl delete -f k8s/odoo/ --ignore-not-found
 	kubectl delete -f k8s/configmap.yaml --ignore-not-found
-	kubectl delete -f k8s/secrets.yaml --ignore-not-found
 	@echo "⚠️  Namespace preserved. To fully clean up:"
 	@echo "   kubectl delete namespace $(NAMESPACE)"
 
@@ -71,6 +73,11 @@ status: ## Show K8s resources status
 	@kubectl -n $(NAMESPACE) get ingress
 	@echo "\n=== HPA ==="
 	@kubectl -n $(NAMESPACE) get hpa
+
+seal-secrets: ## Encrypt secrets.yaml → sealed-secrets.yaml (safe to commit)
+	kubeseal --format yaml < k8s/secrets.yaml > k8s/sealed-secrets.yaml
+	@echo "✅ Sealed! k8s/sealed-secrets.yaml is safe to commit to git."
+	@echo "⚠️  k8s/secrets.yaml is in .gitignore — keep it local only."
 
 k8s-logs: ## Tail Odoo pod logs in K8s
 	kubectl -n $(NAMESPACE) logs -f -l app.kubernetes.io/name=odoo --prefix

@@ -14,8 +14,8 @@ __pycache__/
 # Docker
 docker/tmp/
 
-# K8s secrets (never commit real secrets)
-# k8s/secrets.yaml  # Uncomment if using real creds
+
+k8s/secrets.yaml
 
 # Odoo
 *.log
